@@ -1,1 +1,1 @@
-"""Agentic tools module."""
+"""Agent-accessible tools and external system integrations."""

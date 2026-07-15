@@ -1,1 +1,1 @@
-"""Retrieval module."""
+"""Retrieval pipeline and source routing."""

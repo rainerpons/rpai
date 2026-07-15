@@ -1,1 +1,1 @@
-"""Workflows module."""
+"""Workflow definitions and execution graphs."""
