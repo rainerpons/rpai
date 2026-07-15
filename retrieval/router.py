@@ -2,4 +2,4 @@
 # Enforces priority: Local Working Tree -> Local Commits -> GitHub
 
 def route_retrieval(query: str):
-    pass
+    raise NotImplementedError("Retrieval routing has not yet been implemented.")

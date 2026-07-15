@@ -1,3 +1,3 @@
 # Github Adapter
 def ingest_github_data():
-    pass
+    raise NotImplementedError("GitHub ingestion has not yet been implemented.")
