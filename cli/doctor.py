@@ -35,7 +35,7 @@ def check_environment():
         # Note: The goal here is dependency-health validation only.
         # Persistence validation will occur once the persistence layer exists.
         # This should eventually migrate to `PersistentClient`.
-        client = chromadb.EphemeralClient()
+        _ = chromadb.EphemeralClient()
         print("✅ ChromaDB initializes correctly.")
     except Exception as e:
         print(f"❌ ChromaDB initialization failed: {e}")
