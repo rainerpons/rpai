@@ -1,6 +1,6 @@
 # RPAI
 
-An opinionated AI software engineering workflow.
+An opinionated agentic software engineering workflow.
 
 ## Overview
 
@@ -34,5 +34,5 @@ Retrieval logic prioritizes the engineer's active reality over historical record
 Application state is segregated explicitly by technology under the `state/` directory (e.g., Chroma vectors, LangGraph checkpoints, caches) to preserve long-term operational memory across sessions.
 
 ### Design Patterns in Use
-* **Adapter Pattern**: Abstractions for data ingestion (e.g., `retrieval/adapters/github.py` and `retrieval/adapters/local.py`) isolate source differences from the retrieval router.
+* **Adapter Pattern**: Abstractions for data ingestion (e.g., `retrieval/adapters/github_adapter.py` and `retrieval/adapters/local_adapter.py`) isolate source differences from the retrieval router.
 * **Registry Pattern**: Workflows are registered explicitly via a static dictionary (`workflows/registry.py`) without dynamic reflection or complex plugins.

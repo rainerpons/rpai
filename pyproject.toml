@@ -1,7 +1,7 @@
 [project]
 name = "rpai"
 version = "0.1.0"
-description = "An opinionated AI software engineering workflow"
+description = "An opinionated agentic software engineering workflow"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
