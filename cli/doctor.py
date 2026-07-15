@@ -5,9 +5,9 @@ def check_environment():
     
     # 1. Check Python version
     if sys.version_info < (3, 12):
-        print("❌ Python version must be >= 3.12")
+        print("❌ Python 3.12+ is required")
         return False
-    print("✅ Python version is >= 3.12")
+    print("✅ Python 3.12+ is installed")
     
     # 2. Check dependencies
     try:
@@ -23,8 +23,9 @@ def check_environment():
 
     # 3. Check LangGraph initialization
     try:
-        from workflows.implementation_plan import create_graph
-        graph = create_graph()
+        from workflows.registry import WORKFLOW_REGISTRY
+        for name, create_graph in WORKFLOW_REGISTRY.items():
+            graph = create_graph()
         print("✅ LangGraph workflows initialize correctly.")
     except Exception as e:
         print(f"❌ LangGraph initialization failed: {e}")
@@ -32,6 +33,9 @@ def check_environment():
 
     # 4. Check Chroma initialization
     try:
+        # Note: The goal here is dependency-health validation only.
+        # Persistence validation will occur once the persistence layer exists.
+        # This should eventually migrate to `PersistentClient`.
         client = chromadb.EphemeralClient()
         print("✅ ChromaDB initializes correctly.")
     except Exception as e:
