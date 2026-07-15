@@ -10,6 +10,13 @@ RPAI is designed around a consistent development process that can be applied acr
 
 * Python 3.12+
 
+## Usage
+
+You can validate a project configuration using the `doctor` command:
+
+```shell
+rpai doctor --project projects/example.yaml
+```
 ## Recommended Tooling
 
 * `uv` for development and dependency management. While the project uses standard Python packaging and remains installable via ordinary tooling, examples and scripts may utilize `uv`.

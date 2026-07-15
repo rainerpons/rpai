@@ -14,3 +14,20 @@ dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.scripts]
+rpai = "cli.main:main"
+
+[project.optional-dependencies]
+test = [
+    "pytest"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "cli",
+    "workflows",
+    "retrieval",
+    "tools",
+    "instruction_templates"
+]
