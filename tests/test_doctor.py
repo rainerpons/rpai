@@ -1,6 +1,5 @@
-import pytest
 from pathlib import Path
-from cli.project_validator import validate_project
+from doctor.project import validate_project
 
 def test_valid_configuration(tmp_path):
     # Create a valid project directory and config

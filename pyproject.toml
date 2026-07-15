@@ -29,5 +29,6 @@ packages = [
     "workflows",
     "retrieval",
     "tools",
-    "instruction_templates"
+    "instruction_templates",
+    "doctor"
 ]

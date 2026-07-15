@@ -1,8 +1,23 @@
 import argparse
 import sys
-from cli.project_validator import validate_project
+from doctor.project import validate_project
 
-def main():
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
+
+def handle_doctor(args: argparse.Namespace) -> int:
+    result = validate_project(args.project)
+    
+    if not result.success:
+        if result.message:
+            print(f"Error: {result.message}", file=sys.stderr)
+        return EXIT_FAILURE
+        
+    if result.message:
+        print(result.message)
+    return EXIT_SUCCESS
+
+def main() -> int:
     parser = argparse.ArgumentParser(description="RPAI CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
     
@@ -12,15 +27,9 @@ def main():
     args = parser.parse_args()
     
     if args.command == "doctor":
-        result = validate_project(args.project)
-        if result.success:
-            if result.message:
-                print(result.message)
-            sys.exit(0)
-        else:
-            if result.message:
-                print(f"Error: {result.message}", file=sys.stderr)
-            sys.exit(1)
+        return handle_doctor(args)
+        
+    return EXIT_FAILURE
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

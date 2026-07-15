@@ -1,11 +1,6 @@
 import yaml
-from dataclasses import dataclass
 from pathlib import Path
-
-@dataclass
-class ValidationResult:
-    success: bool
-    message: str | None = None
+from doctor import ValidationResult
 
 def validate_project(config_path: str | Path) -> ValidationResult:
     path = Path(config_path)
@@ -14,7 +9,7 @@ def validate_project(config_path: str | Path) -> ValidationResult:
         return ValidationResult(success=False, message=f"Configuration file not found: {path}")
         
     try:
-        with open(path, 'r') as f:
+        with path.open('r', encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         return ValidationResult(success=False, message=f"Invalid YAML in configuration file:\n{e}")
