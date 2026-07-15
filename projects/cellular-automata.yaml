@@ -1,0 +1,12 @@
+name: Cellular Automata
+github_repository: rainerpons/cellular-automata
+canonical_branch: stage-2
+local_repository_path: /Users/rainerpons/Documents/github/cellular-automata
+enabled_workflows:
+  - issue_decomposition
+  - implementation_plan
+technology:
+  language: Java
+  build_system: Maven
+  testing_framework: JUnit
+  ci_platform: GitHub Actions
