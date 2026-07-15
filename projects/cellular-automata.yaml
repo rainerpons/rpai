@@ -1,7 +1,9 @@
 name: Cellular Automata
 github_repository: rainerpons/cellular-automata
 canonical_branch: stage-2
-local_repository_path: /Users/rainerpons/Documents/github/cellular-automata
+# Optional local checkout used for working tree and local commit inspection.
+# Future workflows may degrade gracefully to GitHub-only behavior or fail fast when local state is required.
+local_repository_path: ~/Documents/github/cellular-automata
 enabled_workflows:
   - issue_decomposition
   - implementation_plan
