@@ -8,11 +8,9 @@ EXIT_FAILURE = 1
 def handle_doctor(args: argparse.Namespace) -> int:
     result = validate_project(args.project)
     
-    if not result.success and not result.message:
-        return EXIT_FAILURE
-        
     if not result.success:
-        print(f"Error: {result.message}", file=sys.stderr)
+        if result.message:
+            print(f"Error: {result.message}", file=sys.stderr)
         return EXIT_FAILURE
         
     if result.message:
