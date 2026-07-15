@@ -15,8 +15,7 @@ def check_environment():
         import chromadb
         import langgraph
         import yaml
-        import dotenv
-        print("✅ Dependencies (llama_index, chromadb, langgraph, pyyaml, python-dotenv) are installed.")
+        print("✅ Dependencies (llama_index, chromadb, langgraph, pyyaml) are installed.")
     except ImportError as e:
         print(f"❌ Missing dependency: {e}")
         return False
@@ -24,8 +23,8 @@ def check_environment():
     # 3. Check LangGraph initialization
     try:
         from workflows.registry import WORKFLOW_REGISTRY
-        for name, create_graph in WORKFLOW_REGISTRY.items():
-            graph = create_graph()
+        for create_graph in WORKFLOW_REGISTRY.values():
+            create_graph()
         print("✅ LangGraph workflows initialize correctly.")
     except Exception as e:
         print(f"❌ LangGraph initialization failed: {e}")
