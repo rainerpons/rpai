@@ -1,1 +1,1 @@
-# retrieval module
+"""Retrieval module."""

@@ -1,1 +1,1 @@
-# agentic tools module
+"""Agentic tools module."""

@@ -1,1 +1,1 @@
-# retrieval adapters module
+"""Retrieval adapters module."""

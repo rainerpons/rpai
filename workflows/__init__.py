@@ -1,1 +1,1 @@
-# workflows module
+"""Workflows module."""

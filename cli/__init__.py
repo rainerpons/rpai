@@ -1,1 +1,1 @@
-# cli module
+"""Command-line interface module."""
