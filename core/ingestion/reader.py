@@ -3,11 +3,10 @@ from typing import Optional
 
 def read_text_file(file_path: Path) -> Optional[str]:
     """
-    Attempt to read a discovered file as UTF-8.
+    Read the contents of a supported text file.
     
-    Returns None if decoding raises UnicodeDecodeError, which defines
-    unsupported files by behavior rather than extension.
-    Allows other filesystem/I/O errors to propagate.
+    Returns None if the file content cannot be decoded as UTF-8,
+    indicating it is unsupported. Other I/O errors are propagated.
     """
     try:
         with file_path.open('r', encoding="utf-8") as f:

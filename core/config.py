@@ -3,17 +3,10 @@ from pathlib import Path
 
 def load_project_config(path: str | Path) -> dict:
     """
-    Load a project configuration YAML file.
+    Load and parse a project configuration YAML file.
     
-    Args:
-        path: Path to the YAML configuration file.
-        
-    Returns:
-        The parsed dictionary from the YAML file.
-        
-    Raises:
-        ValueError: If the parsed YAML is not a dictionary.
-        Exception: Underlying file I/O exceptions or yaml.YAMLError propagate.
+    Validates that the file contains a top-level dictionary object.
+    Propagates underlying filesystem or YAML parsing exceptions.
     """
     path = Path(path)
     

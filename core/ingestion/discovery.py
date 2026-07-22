@@ -3,12 +3,10 @@ from typing import Iterator
 
 def discover_files(repo_path: Path) -> Iterator[Path]:
     """
-    Recursively discover files within a repository.
+    Recursively discover candidate files within a repository directory.
     
-    Yields candidate file Path objects in precise deterministic order:
-    lexicographically sorted by path.relative_to(repo_path).as_posix().
-    Explicitly excludes exactly `.git` and `__pycache__` directory names.
-    Does not determine whether contents are text.
+    Guarantees a deterministic traversal order and excludes standard
+    repository metadata directories such as .git and __pycache__.
     """
     def _walk(directory: Path) -> Iterator[Path]:
         entries = sorted(directory.iterdir(), key=lambda p: p.relative_to(repo_path).as_posix())
@@ -19,5 +17,4 @@ def discover_files(repo_path: Path) -> Iterator[Path]:
             else:
                 yield entry
 
-    if repo_path.is_dir():
-        yield from _walk(repo_path)
+    yield from _walk(repo_path)

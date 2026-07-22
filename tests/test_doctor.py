@@ -73,15 +73,14 @@ def test_repository_path_is_not_directory(tmp_path):
     assert result.success is False
     assert "Local repository path is not a directory" in result.message
 
+from unittest.mock import patch
+
 def test_unreadable_configuration(tmp_path):
     config_file = tmp_path / "config.yaml"
     config_file.write_text("local_repository: .\n")
     
-    # Make file unreadable
-    config_file.chmod(0o000)
-    try:
+    with patch("doctor.project.load_project_config", side_effect=PermissionError("Permission denied")):
         result = validate_project(config_file)
-        assert result.success is False
-        assert "Failed to read configuration file" in result.message
-    finally:
-        config_file.chmod(0o644)
+        
+    assert result.success is False
+    assert "Failed to read configuration file" in result.message
