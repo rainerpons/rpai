@@ -8,13 +8,15 @@ EXIT_FAILURE = 1
 def handle_doctor(args: argparse.Namespace) -> int:
     result = validate_project(args.project)
     
-    if result.message:
-        if result.success:
-            print(result.message)
-        else:
+    if not result.success:
+        if result.message:
             print(f"Error: {result.message}", file=sys.stderr)
-            
-    return EXIT_SUCCESS if result.success else EXIT_FAILURE
+        return EXIT_FAILURE
+        
+    if result.message:
+        print(result.message)
+        
+    return EXIT_SUCCESS
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="RPAI CLI")
