@@ -8,7 +8,8 @@ dependencies = [
     "llama-index",
     "chromadb",
     "langgraph",
-    "pyyaml"
+    "pyyaml",
+    "pathspec"
 ]
 
 [build-system]

@@ -14,9 +14,13 @@ def ingest_local_repository(project_config: dict) -> List[Document]:
     returns them as a sequence of Document objects.
     """
     repo_path = resolve_local_repository(project_config)
+    
+    ingestion_config = project_config.get("ingestion", {})
+    include_ignored = ingestion_config.get("include_ignored", [])
+    
     documents = []
     
-    for file_path in discover_files(repo_path):
+    for file_path in discover_files(repo_path, include_ignored):
         content = read_text_file(file_path)
         if content is not None:
             doc = Document(
