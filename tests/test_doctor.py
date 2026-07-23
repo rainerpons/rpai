@@ -1,10 +1,8 @@
 from pathlib import Path
-import stat
-import pytest
+from unittest.mock import patch
 from doctor.project import validate_project
 
 def test_valid_configuration(tmp_path):
-    # Create a valid project directory and config
     repo_dir = tmp_path / "repo"
     repo_dir.mkdir()
     
@@ -17,6 +15,7 @@ def test_valid_configuration(tmp_path):
 
 def test_missing_configuration_file(tmp_path):
     config_file = tmp_path / "nonexistent.yaml"
+    
     result = validate_project(config_file)
     assert result.success is False
     assert "Configuration file not found" in result.message
@@ -72,8 +71,6 @@ def test_repository_path_is_not_directory(tmp_path):
     result = validate_project(config_file)
     assert result.success is False
     assert "Local repository path is not a directory" in result.message
-
-from unittest.mock import patch
 
 def test_unreadable_configuration(tmp_path):
     config_file = tmp_path / "config.yaml"

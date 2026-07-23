@@ -15,8 +15,7 @@ def validate_project(config_path: str | Path) -> ValidationResult:
     except yaml.YAMLError as e:
         return ValidationError(message=f"Invalid YAML in configuration file:\n{e}")
     except (ValueError, KeyError, TypeError, FileNotFoundError, NotADirectoryError) as e:
-        # These core.config exceptions contain the exact user-facing message needed
-        return ValidationError(message=e.args[0])
+        return ValidationError(message=str(e))
     except Exception as e:
         return ValidationError(message=f"Failed to read configuration file: {e}")
         
