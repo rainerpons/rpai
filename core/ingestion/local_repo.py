@@ -14,11 +14,14 @@ def ingest_local_repository(project_config: dict) -> list[Document]:
     
     documents = []
     for file_path in discover_files(repo_path, include_ignored):
-        if (content := read_text_file(file_path)) is not None:
-            documents.append(Document(
-                relative_path=file_path.relative_to(repo_path),
-                content=content,
-                metadata={"repository_path": str(repo_path)}
-            ))
+        content = read_text_file(file_path)
+        if content is None:
+            continue
+            
+        documents.append(Document(
+            relative_path=file_path.relative_to(repo_path),
+            content=content,
+            metadata={"repository_path": str(repo_path)}
+        ))
             
     return documents
