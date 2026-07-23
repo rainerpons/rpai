@@ -4,9 +4,6 @@ from pathlib import Path
 def load_project_config(path: str | Path) -> dict:
     """
     Load and parse a project configuration YAML file.
-    
-    Validates that the file contains a top-level dictionary object.
-    Propagates underlying filesystem or YAML parsing exceptions.
     """
     path = Path(path)
     
@@ -21,8 +18,6 @@ def load_project_config(path: str | Path) -> dict:
 def resolve_local_repository(project_config: dict) -> Path:
     """
     Extract and resolve the local repository path from a project configuration.
-    
-    Validates the presence, type, and existence of the configured repository path.
     """
     if "local_repository" not in project_config:
         raise ValueError("Missing required field: 'local_repository'")

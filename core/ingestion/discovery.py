@@ -1,14 +1,13 @@
 from pathlib import Path
-from typing import Iterator
+from collections.abc import Iterator
 import pathspec
 
 def discover_files(repo_path: Path, include_ignored: list[str] | None = None) -> Iterator[Path]:
     """
-    Recursively discover candidate files within a repository directory.
+    Yield candidate files within a repository in deterministic order.
     
-    Guarantees a deterministic traversal order and explicitly excludes .git.
-    Respects .gitignore rules if present, while allowing specific patterns 
-    to be explicitly re-included via include_ignored.
+    Always excludes .git/. Respects .gitignore rules if present, unless 
+    explicitly overridden by include_ignored patterns.
     """
     ignore_spec = None
     gitignore_path = repo_path / ".gitignore"
@@ -31,10 +30,10 @@ def discover_files(repo_path: Path, include_ignored: list[str] | None = None) ->
             else:
                 rel_path = entry.relative_to(repo_path).as_posix()
                 
-                is_ignored = ignore_spec.match_file(rel_path) if ignore_spec else False
-                is_included = include_spec.match_file(rel_path) if include_spec else False
-                
-                if not is_ignored or is_included:
-                    yield entry
+                if ignore_spec and ignore_spec.match_file(rel_path):
+                    if not (include_spec and include_spec.match_file(rel_path)):
+                        continue
+                        
+                yield entry
 
     yield from _walk(repo_path)
