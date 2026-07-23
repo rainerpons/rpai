@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 
+from core.config import resolve_local_repository
 from .models import Document
 from .discovery import discover_files
 from .reader import read_text_file
@@ -12,20 +13,9 @@ def ingest_local_repository(project_config: dict) -> List[Document]:
     Discovers supported files in the configured local repository and 
     returns them as a sequence of Document objects.
     """
-    # Extract and validate the ingestion boundary
-    local_repo = project_config["local_repository"]
-    if not isinstance(local_repo, str):
-        raise TypeError(f"'local_repository' must be a string, got {type(local_repo).__name__}")
-        
-    repo_path = Path(local_repo).expanduser().resolve()
-    if not repo_path.exists():
-        raise FileNotFoundError(f"Local repository path does not exist: {repo_path}")
-    if not repo_path.is_dir():
-        raise NotADirectoryError(f"Local repository path is not a directory: {repo_path}")
-        
+    repo_path = resolve_local_repository(project_config)
     documents = []
     
-    # Process files in deterministic order
     for file_path in discover_files(repo_path):
         content = read_text_file(file_path)
         if content is not None:

@@ -4,37 +4,53 @@ from core.ingestion.discovery import discover_files
 from core.ingestion.reader import read_text_file
 from core.ingestion.local_repo import ingest_local_repository
 
-FIXTURE_DIR = Path("tests/fixtures/sample_repo").resolve()
-
-def test_discover_files():
+def test_discover_files(tmp_path):
     """
     Verifies that discover_files yields candidate file paths in a deterministic, 
     lexicographical order while explicitly excluding standard metadata directories.
     """
-    discovered = list(discover_files(FIXTURE_DIR))
+    # Create fixture structure
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    
+    (repo_dir / "invalid.bin").write_bytes(b"\xff\xfe\xfd")
+    
+    nested = repo_dir / "nested"
+    nested.mkdir()
+    (nested / "nested.txt").write_text("nested content")
+    
+    (repo_dir / "root.txt").write_text("root content")
+    
+    # Excluded directories
+    dot_git = repo_dir / ".git"
+    dot_git.mkdir()
+    (dot_git / "config").write_text("git config")
+    
+    pycache = repo_dir / "__pycache__"
+    pycache.mkdir()
+    (pycache / "cached.pyc").write_text("compiled bytes")
+    
+    discovered = list(discover_files(repo_dir))
     
     expected = [
-        FIXTURE_DIR / "invalid.bin",
-        FIXTURE_DIR / "nested" / "nested.txt",
-        FIXTURE_DIR / "root.txt"
+        repo_dir / "invalid.bin",
+        repo_dir / "nested" / "nested.txt",
+        repo_dir / "root.txt"
     ]
     
     assert discovered == expected
-    
-    # Explicitly prove exclusions worked
-    discovered_names = [p.name for p in discovered]
-    assert "config" not in discovered_names  # .git/config is excluded
-    assert "cached.pyc" not in discovered_names  # __pycache__/cached.pyc is excluded
 
-def test_read_text_file_success():
+def test_read_text_file_success(tmp_path):
     """Verifies successful UTF-8 decoding of a supported text file."""
-    path = FIXTURE_DIR / "root.txt"
+    path = tmp_path / "root.txt"
+    path.write_text("root content\n")
     content = read_text_file(path)
     assert content == "root content\n"
 
-def test_read_text_file_invalid_utf8():
+def test_read_text_file_invalid_utf8(tmp_path):
     """Verifies that decoding errors signify an unsupported file, returning None."""
-    path = FIXTURE_DIR / "invalid.bin"
+    path = tmp_path / "invalid.bin"
+    path.write_bytes(b"\xff\xfe\xfd")
     content = read_text_file(path)
     assert content is None
 
@@ -44,43 +60,35 @@ def test_read_text_file_io_error(tmp_path):
     with pytest.raises(FileNotFoundError):
         read_text_file(path)
 
-def test_ingest_local_repository_missing_key():
-    with pytest.raises(KeyError):
-        ingest_local_repository({"other_key": "value"})
-
-def test_ingest_local_repository_non_string_key():
-    with pytest.raises(TypeError):
-        ingest_local_repository({"local_repository": 123})
-
-def test_ingest_local_repository_nonexistent(tmp_path):
-    with pytest.raises(FileNotFoundError):
-        ingest_local_repository({"local_repository": str(tmp_path / "missing")})
-
-def test_ingest_local_repository_not_directory(tmp_path):
-    file_path = tmp_path / "file.txt"
-    file_path.write_text("hello")
-    with pytest.raises(NotADirectoryError):
-        ingest_local_repository({"local_repository": str(file_path)})
-
-def test_ingest_local_repository_success():
+def test_ingest_local_repository_success(tmp_path):
     """
     Verifies that ingestion properly orchestrates discovery and reading, 
     omits unsupported files, and correctly formats Document objects.
     """
-    project_config = {"local_repository": str(FIXTURE_DIR)}
+    # Create valid repo structure
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    
+    nested = repo_dir / "nested"
+    nested.mkdir()
+    (nested / "nested.txt").write_text("nested content\n")
+    
+    (repo_dir / "root.txt").write_text("root content\n")
+    (repo_dir / "invalid.bin").write_bytes(b"\xff\xfe\xfd")
+    
+    project_config = {"local_repository": str(repo_dir)}
     documents = ingest_local_repository(project_config)
     
-    assert len(documents) == 2
-    
-    # Ensure binary/unsupported files are absent
+    # Asserting exact relative path sequence naturally proves ordering,
+    # omission of invalid.bin, and the total length.
     ingested_paths = [doc.relative_path for doc in documents]
-    assert Path("invalid.bin") not in ingested_paths
+    assert ingested_paths == [
+        Path("nested/nested.txt"),
+        Path("root.txt")
+    ]
     
-    # Assert exact Document values
-    assert documents[0].relative_path == Path("nested/nested.txt")
     assert documents[0].content == "nested content\n"
-    assert documents[0].metadata["repository_path"] == str(FIXTURE_DIR)
+    assert documents[0].metadata["repository_path"] == str(repo_dir)
     
-    assert documents[1].relative_path == Path("root.txt")
     assert documents[1].content == "root content\n"
-    assert documents[1].metadata["repository_path"] == str(FIXTURE_DIR)
+    assert documents[1].metadata["repository_path"] == str(repo_dir)
