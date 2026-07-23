@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Iterator
+import pathspec
 
 def discover_files(repo_path: Path, include_ignored: list[str] | None = None) -> Iterator[Path]:
     """
@@ -9,16 +10,11 @@ def discover_files(repo_path: Path, include_ignored: list[str] | None = None) ->
     Respects .gitignore rules if present, while allowing specific patterns 
     to be explicitly re-included via include_ignored.
     """
-    import pathspec
-    
     ignore_spec = None
     gitignore_path = repo_path / ".gitignore"
     if gitignore_path.is_file():
-        try:
-            with gitignore_path.open("r", encoding="utf-8") as f:
-                ignore_spec = pathspec.PathSpec.from_lines("gitignore", f)
-        except Exception:
-            pass
+        with gitignore_path.open("r", encoding="utf-8") as f:
+            ignore_spec = pathspec.PathSpec.from_lines("gitignore", f)
             
     include_spec = None
     if include_ignored:
