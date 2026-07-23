@@ -32,7 +32,7 @@ def test_load_project_config_not_dictionary(tmp_path):
     assert "Configuration file must contain a YAML object/dictionary" in str(exc.value)
 
 def test_resolve_local_repository_missing_key():
-    with pytest.raises(KeyError) as exc:
+    with pytest.raises(ValueError) as exc:
         resolve_local_repository({"other_key": "value"})
     assert "Missing required field: 'local_repository'" in str(exc.value)
 

@@ -14,7 +14,7 @@ def validate_project(config_path: str | Path) -> ValidationResult:
         repo_path = resolve_local_repository(data)
     except yaml.YAMLError as e:
         return ValidationError(message=f"Invalid YAML in configuration file:\n{e}")
-    except (ValueError, KeyError, TypeError, FileNotFoundError, NotADirectoryError) as e:
+    except (ValueError, TypeError, FileNotFoundError, NotADirectoryError) as e:
         return ValidationError(message=str(e))
     except Exception as e:
         return ValidationError(message=f"Failed to read configuration file: {e}")

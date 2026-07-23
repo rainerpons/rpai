@@ -25,7 +25,7 @@ def resolve_local_repository(project_config: dict) -> Path:
     Validates the presence, type, and existence of the configured repository path.
     """
     if "local_repository" not in project_config:
-        raise KeyError("Missing required field: 'local_repository'")
+        raise ValueError("Missing required field: 'local_repository'")
         
     local_repo = project_config["local_repository"]
     if not isinstance(local_repo, str):
