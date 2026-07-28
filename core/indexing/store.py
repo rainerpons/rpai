@@ -12,11 +12,13 @@ from core.config import resolve_local_repository
 def _get_project_storage_key(project_config: dict) -> str:
     """
     Derives a deterministic, filesystem-safe directory name for a project.
-    Duplicate repository names at different paths are isolated using a SHA-256 hash.
     """
     repo_path = resolve_local_repository(project_config)
     repo_name = repo_path.name
     
+    # Repository names are not guaranteed to be unique. Two repositories with the
+    # same directory name at different paths must maintain strictly isolated index states.
+    # The readable repository name is retained only to make the state directory understandable.
     path_hash = hashlib.sha256(str(repo_path.resolve()).encode("utf-8")).hexdigest()[:12]
     
     safe_name = re.sub(r'[^a-z0-9]+', '-', repo_name.lower()).strip('-')

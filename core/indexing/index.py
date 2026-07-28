@@ -46,11 +46,14 @@ def index_documents(
         ],
         vector_store=storage_context.vector_store,
         docstore=storage_context.docstore,
+        # LlamaIndex owns document change detection. Unchanged documents are skipped,
+        # and changed documents replace their previous indexed representation entirely.
         docstore_strategy=DocstoreStrategy.UPSERTS,
     )
     
     pipeline.run(documents=llama_docs)
     
-    # Manually persist the docstore since the pipeline only automatically persists vector stores
+    # Chroma persists the vector data automatically, but the docstore must be 
+    # separately persisted to preserve the document hashes and state needed 
+    # for LlamaIndex to recognize unchanged and changed documents across runs.
     storage_context.docstore.persist(persist_path=str(project_state_dir / "docstore.json"))
-
