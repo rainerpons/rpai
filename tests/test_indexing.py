@@ -222,3 +222,37 @@ def test_large_input_batching(mock_pipeline_run, temp_state_dir, mock_embed_mode
     assert len(call_args[0].kwargs["documents"]) == 100
     assert len(call_args[1].kwargs["documents"]) == 100
     assert len(call_args[2].kwargs["documents"]) == 50
+
+def test_docstore_does_not_duplicate_text(temp_state_dir, mock_embed_model, tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    project_config = {"name": "test_text_omission", "local_repository": str(repo)}
+    docs = [Document(Path("file.py"), "this is the full text content", {})]
+    
+    # 1. Initial ingestion
+    index_documents(docs, project_config, temp_state_dir, mock_embed_model)
+    
+    storage_context = get_storage_context(project_config, temp_state_dir)
+    col = storage_context.vector_store.client
+    
+    # Verify docstore does not contain the text
+    nodes = list(storage_context.docstore.docs.values())
+    for node in nodes:
+        assert "this is the full text content" not in node.text
+        
+    hashes = storage_context.docstore.get_all_document_hashes()
+    assert len(hashes) > 0
+    
+    # 2. Reload context and run unchanged -> should skip
+    initial_chroma_count = len(col.get()["ids"])
+    index_documents(docs, project_config, temp_state_dir, mock_embed_model)
+    new_chroma_count = len(col.get()["ids"])
+    assert initial_chroma_count == new_chroma_count  # Still skipped properly
+    
+    # 3. Reload context and run changed -> should replace
+    docs[0].content = "this is the changed text content"
+    index_documents(docs, project_config, temp_state_dir, mock_embed_model)
+    
+    chroma_docs = col.get()["documents"]
+    assert any("changed text content" in d for d in chroma_docs)
+    assert not any("full text content" in d for d in chroma_docs)

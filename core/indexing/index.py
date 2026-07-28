@@ -56,7 +56,7 @@ def index_documents(
     batch_size = 100
     for i in range(0, len(llama_docs), batch_size):
         batch = llama_docs[i : i + batch_size]
-        pipeline.run(documents=batch)
+        pipeline.run(documents=batch, store_doc_text=False)
     
     # Chroma persists the vector data automatically, but the docstore must be 
     # separately persisted to preserve the document hashes and state needed 
