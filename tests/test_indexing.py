@@ -205,3 +205,20 @@ def test_repository_relative_metadata(temp_state_dir, mock_embed_model, tmp_path
     meta = col.get()["metadatas"][0]
     
     assert meta["relative_path"] == "src/nested/file.py"
+
+@patch("core.indexing.index.IngestionPipeline.run")
+def test_large_input_batching(mock_pipeline_run, temp_state_dir, mock_embed_model, tmp_path):
+    repo = tmp_path / "batching"
+    repo.mkdir()
+    project_config = {"name": "batching", "local_repository": str(repo)}
+    
+    docs = [Document(Path(f"file_{i}.txt"), f"content {i}", {}) for i in range(250)]
+    
+    index_documents(docs, project_config, temp_state_dir, mock_embed_model)
+    
+    assert mock_pipeline_run.call_count == 3
+    
+    call_args = mock_pipeline_run.call_args_list
+    assert len(call_args[0].kwargs["documents"]) == 100
+    assert len(call_args[1].kwargs["documents"]) == 100
+    assert len(call_args[2].kwargs["documents"]) == 50

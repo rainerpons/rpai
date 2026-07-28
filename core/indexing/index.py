@@ -51,7 +51,12 @@ def index_documents(
         docstore_strategy=DocstoreStrategy.UPSERTS,
     )
     
-    pipeline.run(documents=llama_docs)
+    # Process documents in batches of 100 to avoid exceeding ChromaDB's max batch size limit
+    # (e.g. 5461 records) when the pipeline adds extracted nodes to the vector store.
+    batch_size = 100
+    for i in range(0, len(llama_docs), batch_size):
+        batch = llama_docs[i : i + batch_size]
+        pipeline.run(documents=batch)
     
     # Chroma persists the vector data automatically, but the docstore must be 
     # separately persisted to preserve the document hashes and state needed 
