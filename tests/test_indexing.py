@@ -1,5 +1,4 @@
 import pytest
-import shutil
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,7 +11,6 @@ from core.indexing.index import index_documents, get_default_embedding
 
 @pytest.fixture
 def mock_embed_model():
-    # Use a small MockEmbedding for fast tests
     return MockEmbedding(embed_dim=10)
 
 @pytest.fixture
@@ -73,6 +71,7 @@ def test_chunking_large_document(temp_state_dir, mock_embed_model, tmp_path):
     repo = tmp_path / "test-chunking"
     repo.mkdir()
     project_config = {"name": "test-chunking", "local_repository": str(repo)}
+    
     index_documents(
         documents=docs,
         project_config=project_config,
@@ -101,8 +100,6 @@ def test_persistence_reopen_and_skip_unchanged(temp_state_dir, tmp_path):
         )
     ]
     
-    # We use a list to track calls since MockEmbedding is a Pydantic model
-    # and doesn't allow arbitrary attribute assignment.
     embed_calls = []
     
     class TrackingMockEmbedding(MockEmbedding):
@@ -112,21 +109,16 @@ def test_persistence_reopen_and_skip_unchanged(temp_state_dir, tmp_path):
             
     track_embed = TrackingMockEmbedding(embed_dim=10)
     
-    # 1. Index document
     index_documents(docs, project_config, temp_state_dir, track_embed)
     initial_calls = len(embed_calls)
     assert initial_calls > 0
     
-    # Verify it was saved
     store_context = get_storage_context(project_config, temp_state_dir)
     assert len(store_context.vector_store.client.get()["ids"]) > 0
     
-    # 2. Re-index the same unchanged document again (simulating reopen)
     embed_calls.clear()
     index_documents(docs, project_config, temp_state_dir, track_embed)
     
-    # 3. Verify it is recognized as unchanged and skipped
-    # Since DocstoreStrategy.UPSERTS is used and docstore is persisted, embedding should not be called again.
     assert len(embed_calls) == 0
 
 def test_project_isolation_same_name(temp_state_dir, mock_embed_model, tmp_path):
@@ -152,13 +144,11 @@ def test_project_isolation_same_name(temp_state_dir, mock_embed_model, tmp_path)
         embed_model=mock_embed_model
     )
     
-    # Check A
     col_a = get_storage_context(proj_a, temp_state_dir).vector_store.client
     res_a = col_a.get()
     assert len(res_a["ids"]) == 1
     assert res_a["documents"][0] == "A"
     
-    # Check B
     col_b = get_storage_context(proj_b, temp_state_dir).vector_store.client
     res_b = col_b.get()
     assert len(res_b["ids"]) == 1
@@ -186,7 +176,6 @@ def test_multi_chunk_replacement(temp_state_dir, mock_embed_model, tmp_path):
     repo.mkdir()
     project_config = {"name": "replace", "local_repository": str(repo)}
     
-    # 1. Original document large enough to produce multiple chunks
     large_content = "This is a sentence. " * 1000
     docs = [Document(Path("change.txt"), large_content, {})]
     index_documents(docs, project_config, temp_state_dir, mock_embed_model)
@@ -194,16 +183,14 @@ def test_multi_chunk_replacement(temp_state_dir, mock_embed_model, tmp_path):
     col = get_storage_context(project_config, temp_state_dir).vector_store.client
     original_results = col.get()
     original_chunk_count = len(original_results["ids"])
-    assert original_chunk_count > 1  # Should be multiple chunks
+    assert original_chunk_count > 1
     
-    # 2. Replaced document with different content (small enough for 1 chunk)
     docs_changed = [Document(Path("change.txt"), "new content only", {})]
     index_documents(docs_changed, project_config, temp_state_dir, mock_embed_model)
     
     col = get_storage_context(project_config, temp_state_dir).vector_store.client
     results = col.get()
     
-    # 3. Verify old chunks are gone, only new representation remains
     assert len(results["ids"]) == 1
     assert results["documents"][0] == "new content only"
 
