@@ -9,7 +9,7 @@ from llama_index.core.storage.docstore import SimpleDocumentStore
 
 from core.config import resolve_local_repository
 
-def _get_safe_project_key(project_config: dict) -> str:
+def _get_project_storage_key(project_config: dict) -> str:
     """
     Derives a deterministic, filesystem-safe directory name for a project.
     Duplicate repository names at different paths are isolated using a SHA-256 hash.
@@ -26,7 +26,7 @@ def _get_safe_project_key(project_config: dict) -> str:
     return f"{safe_name}-{path_hash}"
 
 def get_project_state_dir(project_config: dict, state_dir: Path = Path("state")) -> Path:
-    project_key = _get_safe_project_key(project_config)
+    project_key = _get_project_storage_key(project_config)
     return state_dir / "chroma" / project_key
 
 def get_storage_context(project_config: dict, state_dir: Path = Path("state")) -> StorageContext:

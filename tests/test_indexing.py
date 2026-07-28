@@ -5,7 +5,7 @@ from unittest.mock import patch
 from llama_index.core.embeddings import MockEmbedding
 
 from core.ingestion.models import Document
-from core.indexing.store import get_storage_context, _get_safe_project_key
+from core.indexing.store import get_storage_context, _get_project_storage_key
 from core.indexing.index import index_documents, get_default_embedding
 
 @pytest.fixture
@@ -18,10 +18,10 @@ def temp_state_dir(tmp_path):
     state_dir.mkdir()
     return state_dir
 
-def test_safe_project_key(tmp_path):
+def test_project_storage_key(tmp_path):
     repo = tmp_path / "test-proj"
     repo.mkdir()
-    assert "test-proj" in _get_safe_project_key({"name": "Test Project", "local_repository": str(repo)})
+    assert "test-proj" in _get_project_storage_key({"name": "Test Project", "local_repository": str(repo)})
 
 def test_index_ingested_documents(temp_state_dir, mock_embed_model, tmp_path):
     repo = tmp_path / "test-proj"
