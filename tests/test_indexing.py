@@ -3,7 +3,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 from llama_index.core.embeddings import MockEmbedding
-from llama_index.core import VectorStoreIndex
 
 from core.ingestion.models import Document
 from core.indexing.store import get_storage_context, _get_safe_project_key
