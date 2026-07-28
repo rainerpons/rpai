@@ -11,7 +11,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.ingestion import IngestionPipeline, DocstoreStrategy
 
 from core.ingestion.models import Document as RPAIDocument
-from core.indexing.store import get_storage_context
+from core.indexing.store import get_storage_context, get_project_state_dir
 
 def get_default_embedding() -> BaseEmbedding:
     """
@@ -33,7 +33,7 @@ def index_documents(
     Applies DocstoreStrategy.UPSERTS to replace changed documents and skip unchanged ones.
     """
     # 1. Resolve storage
-    project_state_dir = state_dir / "chroma" / get_storage_context.__globals__.get("_get_safe_project_key")(project_config)
+    project_state_dir = get_project_state_dir(project_config, state_dir)
     storage_context = get_storage_context(project_config, state_dir=state_dir)
     
     # 2. Setup Embedding
@@ -72,9 +72,5 @@ def index_documents(
     # 6. Persist Docstore State
     # The pipeline automatically persists to the vector store via Chroma, but we must
     # manually persist the docstore to ensure change detection works across sessions.
-    # We resolve the project directory again here to save the docstore.json
-    from core.indexing.store import _get_safe_project_key
-    project_key = _get_safe_project_key(project_config)
-    persist_dir = state_dir / "chroma" / project_key
-    storage_context.docstore.persist(persist_path=str(persist_dir / "docstore.json"))
+    storage_context.docstore.persist(persist_path=str(project_state_dir / "docstore.json"))
 

@@ -14,14 +14,14 @@ from core.config import resolve_local_repository
 def _get_safe_project_key(project_config: dict) -> str:
     """
     Derives a safe, deterministic directory name from the project configuration.
-    Uses the local repository path to generate a unique hash, appending it to the
+    Uses the local repository path to generate a unique SHA-256 hash, appending it to the
     repository name to ensure duplicate names at different paths remain isolated.
     """
     repo_path = resolve_local_repository(project_config)
     repo_name = repo_path.name
     
-    # Generate deterministic hash from the absolute path
-    path_hash = hashlib.md5(str(repo_path.resolve()).encode("utf-8")).hexdigest()[:8]
+    # Generate deterministic SHA-256 hash from the absolute path (prefix 12 chars)
+    path_hash = hashlib.sha256(str(repo_path.resolve()).encode("utf-8")).hexdigest()[:12]
     
     # Lowercase, replace non-alphanumeric with hyphens, strip extra hyphens
     safe_name = re.sub(r'[^a-z0-9]+', '-', repo_name.lower()).strip('-')
@@ -30,16 +30,21 @@ def _get_safe_project_key(project_config: dict) -> str:
         
     return f"{safe_name}-{path_hash}"
 
+def get_project_state_dir(project_config: dict, state_dir: Path = Path("state")) -> Path:
+    """
+    Returns the persistent state directory for the project.
+    """
+    project_key = _get_safe_project_key(project_config)
+    return state_dir / "chroma" / project_key
+
 def get_storage_context(project_config: dict, state_dir: Path = Path("state")) -> StorageContext:
     """
     Resolves the persistent Chroma location for the project, initializes Chroma,
     and returns a LlamaIndex StorageContext wrapping the Chroma vector store
     and SimpleDocumentStore for change tracking.
     """
-    project_key = _get_safe_project_key(project_config)
-    
     # Isolate projects by placing them in separate directories under state/
-    project_state_dir = state_dir / "chroma" / project_key
+    project_state_dir = get_project_state_dir(project_config, state_dir)
     project_state_dir.mkdir(parents=True, exist_ok=True)
     
     # Initialize persistent Chroma client for this project
