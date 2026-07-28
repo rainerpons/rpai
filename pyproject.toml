@@ -9,7 +9,9 @@ dependencies = [
     "chromadb",
     "langgraph",
     "pyyaml",
-    "pathspec"
+    "pathspec",
+    "llama-index-embeddings-huggingface",
+    "llama-index-vector-stores-chroma"
 ]
 
 [build-system]

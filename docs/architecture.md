@@ -9,7 +9,11 @@ This document defines the stable architectural boundaries and dependency directi
 
 ## Core (`core`)
 * **`core.config`**: Owns loading and resolving project configurations into values the application can consume.
-* **`core.ingestion`**: Turns project sources into `Document` objects.
+* **`core.ingestion`**: Turns supported project sources into RPAI `Document` objects.
+* **`core.indexing`**: Turns `Document` objects into persistent, project-isolated retrieval representations.
+  * Chroma owns persistent vector storage.
+  * LlamaIndex owns generic chunking/indexing/embedding/vector-store integration.
+  * Retrieval remains a separate future responsibility.
 
 ## Ingestion Components (`core.ingestion`)
 Ingestion components should remain independently testable and avoid taking on each other's responsibilities:
