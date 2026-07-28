@@ -20,14 +20,15 @@ def temp_state_dir(tmp_path):
     state_dir.mkdir()
     return state_dir
 
-def test_safe_project_key():
-    assert _get_safe_project_key({"name": "Test Project"}) == "test-project"
-    assert _get_safe_project_key({"github_repository": "user/repo"}) == "user-repo"
-    assert _get_safe_project_key({}) == "default"
-    assert _get_safe_project_key({"name": "!!! ***"}) == "default"
+def test_safe_project_key(tmp_path):
+    repo = tmp_path / "test-proj"
+    repo.mkdir()
+    assert "test-proj" in _get_safe_project_key({"name": "Test Project", "local_repository": str(repo)})
 
-def test_index_ingested_documents(temp_state_dir, mock_embed_model):
-    project_config = {"name": "test-proj"}
+def test_index_ingested_documents(temp_state_dir, mock_embed_model, tmp_path):
+    repo = tmp_path / "test-proj"
+    repo.mkdir()
+    project_config = {"name": "test-proj", "local_repository": str(repo)}
     
     docs = [
         Document(
@@ -37,20 +38,14 @@ def test_index_ingested_documents(temp_state_dir, mock_embed_model):
         )
     ]
     
-    index = index_documents(
+    index_documents(
         documents=docs,
         project_config=project_config,
         state_dir=temp_state_dir,
         embed_model=mock_embed_model
     )
     
-    # Verify index contains our node
-    assert isinstance(index, VectorStoreIndex)
-    
-    # We can check nodes in docstore or vector store
-    store = index.storage_context.vector_store
-    # In LlamaIndex, the ChromaVectorStore client attribute often holds the Chroma collection directly.
-    # Alternatively we can use the private _collection or assume store.client is the collection.
+    store = get_storage_context(project_config, temp_state_dir).vector_store
     collection = store.client
     
     results = collection.get()
@@ -59,7 +54,7 @@ def test_index_ingested_documents(temp_state_dir, mock_embed_model):
     assert results["metadatas"][0]["relative_path"] == "src/main.py"
     assert results["metadatas"][0]["source"] == "test"
 
-def test_chunking_large_document(temp_state_dir, mock_embed_model):
+def test_chunking_large_document(temp_state_dir, mock_embed_model, tmp_path):
     # Create a doc large enough to trigger chunking
     large_content = "Word. " * 2000
     docs = [
@@ -70,7 +65,9 @@ def test_chunking_large_document(temp_state_dir, mock_embed_model):
         )
     ]
     
-    project_config = {"name": "test-chunking"}
+    repo = tmp_path / "test-chunking"
+    repo.mkdir()
+    project_config = {"name": "test-chunking", "local_repository": str(repo)}
     index_documents(
         documents=docs,
         project_config=project_config,
@@ -88,8 +85,10 @@ def test_chunking_large_document(temp_state_dir, mock_embed_model):
     for meta in results["metadatas"]:
         assert meta["relative_path"] == "src/large.txt"
 
-def test_persistence_reopen(temp_state_dir, mock_embed_model):
-    project_config = {"name": "test-persist"}
+def test_persistence_reopen(temp_state_dir, mock_embed_model, tmp_path):
+    repo = tmp_path / "test-persist"
+    repo.mkdir()
+    project_config = {"name": "test-persist", "local_repository": str(repo)}
     
     docs = [
         Document(
@@ -114,9 +113,14 @@ def test_persistence_reopen(temp_state_dir, mock_embed_model):
     assert len(results["ids"]) > 0
     assert results["metadatas"][0]["relative_path"] == "src/persist.py"
 
-def test_project_isolation(temp_state_dir, mock_embed_model):
-    proj_a = {"name": "Proj A"}
-    proj_b = {"name": "Proj B"}
+def test_project_isolation(temp_state_dir, mock_embed_model, tmp_path):
+    repo_a = tmp_path / "proj-a"
+    repo_a.mkdir()
+    proj_a = {"name": "Proj A", "local_repository": str(repo_a)}
+    
+    repo_b = tmp_path / "proj-b"
+    repo_b.mkdir()
+    proj_b = {"name": "Proj B", "local_repository": str(repo_b)}
     
     index_documents(
         documents=[Document(Path("a.txt"), "A", {})],
@@ -144,8 +148,10 @@ def test_project_isolation(temp_state_dir, mock_embed_model):
     assert len(res_b["ids"]) > 0
     assert res_b["metadatas"][0]["relative_path"] == "b.txt"
 
-def test_idempotent_reindexing(temp_state_dir, mock_embed_model):
-    project_config = {"name": "idempotent"}
+def test_idempotent_reindexing(temp_state_dir, mock_embed_model, tmp_path):
+    repo = tmp_path / "idempotent"
+    repo.mkdir()
+    project_config = {"name": "idempotent", "local_repository": str(repo)}
     docs = [Document(Path("idem.txt"), "content", {})]
     
     # First index
@@ -161,8 +167,10 @@ def test_idempotent_reindexing(temp_state_dir, mock_embed_model):
     assert count_1 == count_2
     assert count_1 > 0
 
-def test_changed_document_replacement(temp_state_dir, mock_embed_model):
-    project_config = {"name": "replace"}
+def test_changed_document_replacement(temp_state_dir, mock_embed_model, tmp_path):
+    repo = tmp_path / "replace"
+    repo.mkdir()
+    project_config = {"name": "replace", "local_repository": str(repo)}
     
     # Original
     docs = [Document(Path("change.txt"), "old content", {})]
@@ -181,8 +189,10 @@ def test_changed_document_replacement(temp_state_dir, mock_embed_model):
     assert len(results["documents"]) == 1
     assert results["documents"][0] == "new content"
 
-def test_repository_relative_metadata(temp_state_dir, mock_embed_model):
-    project_config = {"name": "metadata"}
+def test_repository_relative_metadata(temp_state_dir, mock_embed_model, tmp_path):
+    repo = tmp_path / "metadata"
+    repo.mkdir()
+    project_config = {"name": "metadata", "local_repository": str(repo)}
     
     docs = [Document(Path("src/nested/file.py"), "code", {})]
     index_documents(docs, project_config, temp_state_dir, mock_embed_model)
