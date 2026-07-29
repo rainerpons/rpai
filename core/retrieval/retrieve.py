@@ -1,4 +1,4 @@
-from typing import Optional, List
+
 from pathlib import Path
 
 from llama_index.core.embeddings import BaseEmbedding
@@ -13,8 +13,8 @@ def retrieve_context(
     project_config: dict,
     top_k: int = 5,
     state_dir: Path = Path("state"),
-    embed_model: Optional[BaseEmbedding] = None,
-) -> List[RetrievalResult]:
+    embed_model: BaseEmbedding | None = None,
+) -> list[RetrievalResult]:
     """
     Retrieve semantic context for a query from a project's index.
     """

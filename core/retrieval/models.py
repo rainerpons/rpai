@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
+from typing import Any
 
 @dataclass(frozen=True)
 class RetrievalResult:
     text: str
-    metadata: Dict[str, Any]
-    score: Optional[float] = None
+    metadata: dict[str, Any]
+    score: float | None = None
