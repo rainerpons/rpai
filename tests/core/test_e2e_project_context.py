@@ -61,23 +61,72 @@ def test_e2e_project_context_pipeline(tmp_path):
     # indexing will persist to state_dir
     index_documents(documents, loaded_config, state_dir=state_dir, embed_model=embed_model)
     
-    # Step B: Retrieval across the persistence boundary
-    # We do NOT pass the existing VectorStoreIndex or StorageContext.
-    # We just call retrieve_context, which will instantiate them from the persisted disk state.
+    # Step B: Retrieval across a real process boundary
+    # We spawn a completely separate Python process to ensure we are querying
+    # the persisted state on disk rather than any in-memory objects.
     
-    results = retrieve_context(
-        query="apple",
-        project_config=loaded_config,
-        top_k=2,
-        state_dir=state_dir,
-        embed_model=embed_model
+    retrieval_script = tmp_path / "run_retrieval.py"
+    retrieval_script.write_text(f"""
+import sys
+import json
+from pathlib import Path
+from core.config import load_project_config
+from core.retrieval.retrieve import retrieve_context
+
+# We need the same deterministic embedding model to query the index
+from tests.core.test_e2e_project_context import DeterministicTestEmbedding
+
+config_path = "{config_path}"
+state_dir = Path("{state_dir}")
+loaded_config = load_project_config(config_path)
+
+embed_model = DeterministicTestEmbedding()
+
+results = retrieve_context(
+    query="apple",
+    project_config=loaded_config,
+    top_k=2,
+    state_dir=state_dir,
+    embed_model=embed_model
+)
+
+output = []
+for res in results:
+    output.append({{
+        "text": res.text,
+        "relative_path": res.metadata.get("relative_path")
+    }})
+
+with open("{tmp_path / 'retrieval_results.json'}", "w") as f:
+    json.dump(output, f)
+""")
+
+    import subprocess
+    import sys
+    
+    # Run the retrieval script in a separate process
+    import os
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(Path(__file__).parent.parent.parent)
+    
+    result = subprocess.run(
+        [sys.executable, str(retrieval_script)],
+        capture_output=True,
+        text=True,
+        env=env
     )
     
-    assert len(results) > 0
-    assert any("apple" in res.text.lower() for res in results)
+    assert result.returncode == 0, f"Retrieval script failed:\n{{result.stderr}}"
+    
+    import json
+    with open(tmp_path / "retrieval_results.json") as f:
+        retrieved_data = json.load(f)
+        
+    assert len(retrieved_data) > 0
+    assert any("apple" in item["text"].lower() for item in retrieved_data)
     
     # Verify metadata is repository-relative
-    metadata_paths = [res.metadata.get("relative_path") for res in results]
+    metadata_paths = [item["relative_path"] for item in retrieved_data]
     assert "src/apple_module.py" in metadata_paths or "docs/info.txt" in metadata_paths
     
     # Ensure orange is not retrieved when asking for apple
