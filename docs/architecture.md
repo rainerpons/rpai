@@ -13,7 +13,8 @@ This document defines the stable architectural boundaries and dependency directi
 * **`core.indexing`**: Turns `Document` objects into persistent, project-isolated retrieval representations.
   * Chroma owns persistent vector storage.
   * LlamaIndex owns generic chunking/indexing/embedding/vector-store integration.
-  * Retrieval remains a separate future responsibility.
+* **`core.embeddings`**: Owns shared embedding models and configurations used by indexing and retrieval.
+* **`core.retrieval`**: Owns retrieving relevant context from a project's index, returning internal `RetrievalResult` objects without leaking LlamaIndex abstractions. Depends on `core.embeddings` and `core.indexing` storage but decoupled from the indexing process itself.
 
 ## Ingestion Components (`core.ingestion`)
 Ingestion components should remain independently testable and avoid taking on each other's responsibilities:
