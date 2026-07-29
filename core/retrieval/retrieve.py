@@ -6,7 +6,7 @@ from llama_index.core import VectorStoreIndex
 from llama_index.core.schema import NodeWithScore
 
 from core.indexing.store import get_storage_context
-from core.indexing.index import get_default_embedding
+from core.embeddings import get_default_embedding
 
 def retrieve_context(
     query: str,

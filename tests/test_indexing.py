@@ -6,7 +6,8 @@ from llama_index.core.embeddings import MockEmbedding
 
 from core.ingestion.models import Document
 from core.indexing.store import get_storage_context, _get_project_storage_key
-from core.indexing.index import index_documents, get_default_embedding
+from core.indexing.index import index_documents
+from core.embeddings import get_default_embedding
 
 @pytest.fixture
 def mock_embed_model():
@@ -52,7 +53,7 @@ def test_index_ingested_documents(temp_state_dir, mock_embed_model, tmp_path):
     assert results["metadatas"][0]["relative_path"] == "src/main.py"
     assert results["metadatas"][0]["source"] == "test"
 
-@patch("core.indexing.index.HuggingFaceEmbedding")
+@patch("core.embeddings.HuggingFaceEmbedding")
 def test_default_embedding_model(mock_hf_embedding):
     get_default_embedding()
     mock_hf_embedding.assert_called_once_with(model_name="Alibaba-NLP/gte-modernbert-base")
