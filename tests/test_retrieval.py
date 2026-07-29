@@ -60,7 +60,7 @@ def test_retrieves_semantically_relevant_indexed_content(temp_state_dir, test_em
     )
     
     assert len(results) > 0
-    assert "apples" in results[0].node.text.lower()
+    assert "apples" in results[0].text.lower()
     
 def test_preserves_repository_relative_source_metadata(temp_state_dir, test_embed_model, tmp_path):
     repo = tmp_path / "test-proj"
@@ -79,7 +79,7 @@ def test_preserves_repository_relative_source_metadata(temp_state_dir, test_embe
     )
     
     assert len(results) == 1
-    assert results[0].node.metadata["relative_path"] == "src/fruit.txt"
+    assert results[0].metadata["relative_path"] == "src/fruit.txt"
     
 def test_respects_top_k(temp_state_dir, test_embed_model, tmp_path):
     repo = tmp_path / "test-proj"
@@ -122,8 +122,8 @@ def test_project_isolation(temp_state_dir, test_embed_model, tmp_path):
     )
     
     assert len(results) == 1
-    assert "project A" in results[0].node.text
-    assert "project B" not in results[0].node.text
+    assert "project A" in results[0].text
+    assert "project B" not in results[0].text
 
 def test_retrieval_survives_reopening_persisted_storage(temp_state_dir, test_embed_model, tmp_path):
     repo = tmp_path / "test-proj"
@@ -143,7 +143,7 @@ def test_retrieval_survives_reopening_persisted_storage(temp_state_dir, test_emb
     )
     
     assert len(results) == 1
-    assert "apple" in results[0].node.text
+    assert "apple" in results[0].text
 
 def test_rejects_empty_query(temp_state_dir, test_embed_model, tmp_path):
     repo = tmp_path / "test-proj"

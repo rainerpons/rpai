@@ -3,10 +3,10 @@ from pathlib import Path
 
 from llama_index.core.embeddings import BaseEmbedding
 from llama_index.core import VectorStoreIndex
-from llama_index.core.schema import NodeWithScore
 
 from core.indexing.store import get_storage_context
 from core.embeddings import get_default_embedding
+from core.retrieval.models import RetrievalResult
 
 def retrieve_context(
     query: str,
@@ -14,7 +14,7 @@ def retrieve_context(
     top_k: int = 5,
     state_dir: Path = Path("state"),
     embed_model: Optional[BaseEmbedding] = None,
-) -> List[NodeWithScore]:
+) -> List[RetrievalResult]:
     """
     Retrieve semantic context for a query from a project's index.
     """
@@ -35,4 +35,13 @@ def retrieve_context(
     )
     
     retriever = index.as_retriever(similarity_top_k=top_k)
-    return retriever.retrieve(query)
+    nodes_with_score = retriever.retrieve(query)
+    
+    return [
+        RetrievalResult(
+            text=node_with_score.node.text,
+            metadata=node_with_score.node.metadata.copy(),
+            score=node_with_score.score
+        )
+        for node_with_score in nodes_with_score
+    ]
