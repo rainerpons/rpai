@@ -15,3 +15,6 @@ venv.bak/
 # Project state
 state/
 !state/**/.gitkeep
+
+# Antigravity Rules
+AGENTS.md
