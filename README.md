@@ -31,15 +31,5 @@ Interaction is intended to be via a dedicated CLI (e.g., `rpai doctor`), routing
 ### Configuration-Driven Project Onboarding
 Support for multiple projects is achieved entirely via configuration (`projects/*.yaml`) rather than custom code. Environmental configuration is strictly separated from project configuration.
 
-### Source Precedence Strategy
-Retrieval logic prioritizes the engineer's active reality over historical records:
-1. Local Working Tree
-2. Local Commits
-3. GitHub (Canonical Source)
-
 ### Persistent State Layout
-Application state is segregated explicitly by technology under the `state/` directory (e.g., Chroma vectors, LangGraph checkpoints, caches) to preserve long-term operational memory across sessions.
-
-### Design Patterns in Use
-* **Adapter Pattern**: Abstractions for data ingestion (e.g., `retrieval/adapters/github_adapter.py` and `retrieval/adapters/local_adapter.py`) isolate source differences from the retrieval router.
-* **Registry Pattern**: Workflows are registered explicitly via a static dictionary (`workflows/registry.py`) without dynamic reflection or complex plugins.
+Application state is segregated explicitly by technology under the `state/` directory (e.g., Chroma vectors, caches) to preserve long-term operational memory across sessions.

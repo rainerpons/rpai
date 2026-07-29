@@ -3,7 +3,7 @@
 This document defines the stable architectural boundaries and dependency directions for RPAI.
 
 ## Dependency Direction
-* Higher-level and user-facing workflows depend on `core` behavior.
+* Higher-level and user-facing CLI tools depend on `core` behavior.
 * `core` contains application and domain behavior and must not depend on user-facing tooling.
 * `doctor` may depend on `core`, but `core` should not depend on `doctor`.
 
