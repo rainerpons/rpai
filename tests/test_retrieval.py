@@ -18,13 +18,13 @@ class DeterministicTestEmbedding(MockEmbedding):
         super().__init__(embed_dim=2)
         
     def _get_text_embedding(self, text: str) -> List[float]:
-        # Dimension 0: 'cat'
-        # Dimension 1: 'dog'
+        # Dimension 0: 'apple'
+        # Dimension 1: 'orange'
         vec = [0.0, 0.0]
         text_lower = text.lower()
-        if "cat" in text_lower:
+        if "apple" in text_lower:
             vec[0] = 1.0
-        if "dog" in text_lower:
+        if "orange" in text_lower:
             vec[1] = 1.0
         return vec
         
@@ -46,13 +46,13 @@ def test_retrieves_semantically_relevant_indexed_content(temp_state_dir, test_em
     repo.mkdir()
     project_config = {"name": "test-proj", "local_repository": str(repo)}
 
-    doc1 = Document(Path("file1.txt"), "This is about cats.", {})
-    doc2 = Document(Path("file2.txt"), "This is about dogs.", {})
+    doc1 = Document(Path("file1.txt"), "This is about apples.", {})
+    doc2 = Document(Path("file2.txt"), "This is about oranges.", {})
     
     index_documents([doc1, doc2], project_config, temp_state_dir, test_embed_model)
     
     results = retrieve_context(
-        query="tell me about cats",
+        query="tell me about apples",
         project_config=project_config,
         top_k=1,
         state_dir=temp_state_dir,
@@ -60,18 +60,18 @@ def test_retrieves_semantically_relevant_indexed_content(temp_state_dir, test_em
     )
     
     assert len(results) > 0
-    assert "cats" in results[0].node.text.lower()
+    assert "apples" in results[0].node.text.lower()
     
 def test_preserves_repository_relative_source_metadata(temp_state_dir, test_embed_model, tmp_path):
     repo = tmp_path / "test-proj"
     repo.mkdir()
     project_config = {"name": "test-proj", "local_repository": str(repo)}
 
-    doc = Document(Path("src/animal.txt"), "cat", {})
+    doc = Document(Path("src/fruit.txt"), "apple", {})
     index_documents([doc], project_config, temp_state_dir, test_embed_model)
     
     results = retrieve_context(
-        query="cat",
+        query="apple",
         project_config=project_config,
         top_k=1,
         state_dir=temp_state_dir,
@@ -79,7 +79,7 @@ def test_preserves_repository_relative_source_metadata(temp_state_dir, test_embe
     )
     
     assert len(results) == 1
-    assert results[0].node.metadata["relative_path"] == "src/animal.txt"
+    assert results[0].node.metadata["relative_path"] == "src/fruit.txt"
     
 def test_respects_top_k(temp_state_dir, test_embed_model, tmp_path):
     repo = tmp_path / "test-proj"
@@ -87,12 +87,12 @@ def test_respects_top_k(temp_state_dir, test_embed_model, tmp_path):
     project_config = {"name": "test-proj", "local_repository": str(repo)}
 
     docs = [
-        Document(Path(f"file{i}.txt"), "cat", {}) for i in range(5)
+        Document(Path(f"file{i}.txt"), "apple", {}) for i in range(5)
     ]
     index_documents(docs, project_config, temp_state_dir, test_embed_model)
     
     results = retrieve_context(
-        query="cat",
+        query="apple",
         project_config=project_config,
         top_k=2,
         state_dir=temp_state_dir,
@@ -110,11 +110,11 @@ def test_project_isolation(temp_state_dir, test_embed_model, tmp_path):
     repo_b.mkdir()
     proj_b = {"name": "proj-b", "local_repository": str(repo_b)}
 
-    index_documents([Document(Path("a.txt"), "cat project A", {})], proj_a, temp_state_dir, test_embed_model)
-    index_documents([Document(Path("b.txt"), "cat project B", {})], proj_b, temp_state_dir, test_embed_model)
+    index_documents([Document(Path("a.txt"), "apple project A", {})], proj_a, temp_state_dir, test_embed_model)
+    index_documents([Document(Path("b.txt"), "apple project B", {})], proj_b, temp_state_dir, test_embed_model)
 
     results = retrieve_context(
-        query="cat",
+        query="apple",
         project_config=proj_a,
         top_k=5,
         state_dir=temp_state_dir,
@@ -130,12 +130,12 @@ def test_retrieval_survives_reopening_persisted_storage(temp_state_dir, test_emb
     repo.mkdir()
     project_config = {"name": "test-proj", "local_repository": str(repo)}
 
-    doc = Document(Path("file.txt"), "cat", {})
+    doc = Document(Path("file.txt"), "apple", {})
     index_documents([doc], project_config, temp_state_dir, test_embed_model)
     
     # Intentionally do not pass any lingering objects, let get_storage_context reopen
     results = retrieve_context(
-        query="cat",
+        query="apple",
         project_config=project_config,
         top_k=5,
         state_dir=temp_state_dir,
@@ -143,7 +143,7 @@ def test_retrieval_survives_reopening_persisted_storage(temp_state_dir, test_emb
     )
     
     assert len(results) == 1
-    assert "cat" in results[0].node.text
+    assert "apple" in results[0].node.text
 
 def test_rejects_empty_query(temp_state_dir, test_embed_model, tmp_path):
     repo = tmp_path / "test-proj"
@@ -175,7 +175,7 @@ def test_empty_project_index(temp_state_dir, test_embed_model, tmp_path):
     # We do NOT index any documents.
     # Just call retrieve directly.
     results = retrieve_context(
-        query="cat",
+        query="apple",
         project_config=project_config,
         top_k=5,
         state_dir=temp_state_dir,
