@@ -24,3 +24,9 @@ Ingestion components should remain independently testable and avoid taking on ea
 
 ## Doctor (`doctor`)
 Validates that a project can be used by RPAI and presents actionable validation failures to the user.
+
+## Design Patterns in Use
+* **Pipeline / Data Flow**: The core project-context subsystem operates as a unidirectional data pipeline: configurations feed ingestion, ingestion produces internal documents, documents are indexed, and the persisted index is queried for context.
+* **Separation of Concerns (Ingestion)**: Discovery, reading, and orchestration are distinct, independently testable phases within `core.ingestion`.
+* **Data Transfer Objects (DTOs)**: `core.ingestion.models.Document` and `core.retrieval.models.RetrievalResult` act as strict boundary objects, preventing external library types (like LlamaIndex documents/nodes) from leaking throughout the application.
+* **Facade**: Functions like `get_storage_context` hide the complexities of initializing external databases and vector stores behind simple, configuration-driven interfaces.
