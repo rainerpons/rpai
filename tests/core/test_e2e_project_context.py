@@ -1,13 +1,15 @@
-import pytest
-from pathlib import Path
+import json
+import subprocess
+import sys
 import yaml
-import chromadb
+from pathlib import Path
+
+from llama_index.core.embeddings import MockEmbedding
 
 from core.config import load_project_config
-from core.ingestion.local_repo import ingest_local_repository
 from core.indexing.index import index_documents
+from core.ingestion.local_repo import ingest_local_repository
 from core.retrieval.retrieve import retrieve_context
-from llama_index.core.embeddings import MockEmbedding
 
 class DeterministicTestEmbedding(MockEmbedding):
     def __init__(self):
@@ -67,14 +69,27 @@ def test_e2e_project_context_pipeline(tmp_path):
     
     retrieval_script = tmp_path / "run_retrieval.py"
     retrieval_script.write_text(f"""
-import sys
 import json
 from pathlib import Path
+from llama_index.core.embeddings import MockEmbedding
 from core.config import load_project_config
 from core.retrieval.retrieve import retrieve_context
 
-# We need the same deterministic embedding model to query the index
-from tests.core.test_e2e_project_context import DeterministicTestEmbedding
+class DeterministicTestEmbedding(MockEmbedding):
+    def __init__(self):
+        super().__init__(embed_dim=2)
+        
+    def _get_text_embedding(self, text: str) -> list[float]:
+        vec = [0.0, 0.0]
+        text_lower = text.lower()
+        if "apple" in text_lower:
+            vec[0] = 1.0
+        if "orange" in text_lower:
+            vec[1] = 1.0
+        return vec
+        
+    def _get_query_embedding(self, query: str) -> list[float]:
+        return self._get_text_embedding(query)
 
 config_path = "{config_path}"
 state_dir = Path("{state_dir}")
@@ -101,24 +116,15 @@ with open("{tmp_path / 'retrieval_results.json'}", "w") as f:
     json.dump(output, f)
 """)
 
-    import subprocess
-    import sys
-    
     # Run the retrieval script in a separate process
-    import os
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(Path(__file__).parent.parent.parent)
-    
     result = subprocess.run(
         [sys.executable, str(retrieval_script)],
         capture_output=True,
-        text=True,
-        env=env
+        text=True
     )
     
     assert result.returncode == 0, f"Retrieval script failed:\n{{result.stderr}}"
     
-    import json
     with open(tmp_path / "retrieval_results.json") as f:
         retrieved_data = json.load(f)
         
