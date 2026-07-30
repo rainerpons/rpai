@@ -1,6 +1,6 @@
 # RPAI
 
-An opinionated agentic software engineering workflow.
+An app for agentic software engineering workflows.
 
 ## Overview
 
