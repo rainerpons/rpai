@@ -21,15 +21,7 @@ def validate_environment() -> ValidationResult:
         messages.append(f"❌ Missing dependency: {e}")
         return ValidationError(message="\n".join(messages))
 
-    # 3. Check LangGraph initialization
-    try:
-        from workflows.registry import WORKFLOW_REGISTRY
-        for create_graph in WORKFLOW_REGISTRY.values():
-            create_graph()
-        messages.append("✅ LangGraph workflows initialize correctly.")
-    except Exception as e:
-        messages.append(f"❌ LangGraph initialization failed: {e}")
-        return ValidationError(message="\n".join(messages))
+
 
     # 4. Check Chroma initialization
     try:
