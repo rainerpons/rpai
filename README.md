@@ -4,39 +4,49 @@ An app for agentic software engineering workflows.
 
 ## Overview
 
-RPAI is designed around a consistent development process that can be applied across multiple repositories, technology stacks, and engineering domains.
+RPAI provides reusable project context to AI-assisted engineering tools without requiring the same repository context to be supplied repeatedly. Its current project-context subsystem loads project configuration, ingests source files, creates embeddings, persists a vector index, and performs semantic retrieval against that index.
 
-## Requirements
+The project emphasizes explicit architectural boundaries, configuration-driven behavior, persistent local state, and independently testable components. It is designed to support multiple software projects and technology stacks while keeping project-specific knowledge isolated.
 
-* Python 3.12+
+## Current Capabilities
+
+- Configuration-driven project onboarding with YAML.
+- Local repository discovery and text ingestion.
+- Document chunking and embeddings through LlamaIndex.
+- Persistent vector storage with Chroma.
+- Semantic retrieval with repository-relative source metadata.
+- Project-isolated persisted state.
+- CLI-based project validation through `rpai doctor`.
+- Automated unit and end-to-end testing with pytest.
+
+## Project Context Pipeline
+
+The implemented project-context subsystem follows a straightforward data flow:
+
+`project config → local repository → documents → index → query → relevant context`
+
+Project configuration identifies a local repository. Supported repository content is ingested into internal documents, chunked and embedded, and persisted in a project-specific Chroma vector store. Retrieval reconnects to that persisted index and returns relevant context with source metadata that can be traced back to repository-relative files.
+
+## Technology
+
+RPAI is built with Python 3.12+ and uses LlamaIndex for indexing and retrieval integration, Chroma for persistent vector storage, Hugging Face embedding models, PyYAML for project configuration, and pytest for automated testing.
 
 ## Usage
 
-You can validate a project configuration using the `doctor` command:
+Validate a project configuration with the `doctor` command:
 
 ```shell
 rpai doctor --project projects/example.yaml
 ```
-## Recommended Tooling
 
-* `uv` for development and dependency management. While the project uses standard Python packaging and remains installable via ordinary tooling, examples and scripts may utilize `uv`.
+## Development
+
+`uv` is the recommended tool for local development and dependency management. The project uses standard Python packaging and remains installable through other compatible tooling.
 
 ## Architecture
 
-RPAI is designed as a foundational infrastructure for personal AI engineering, employing explicit structures and concepts rather than generic components.
+The project keeps configuration, ingestion, indexing, embeddings, retrieval, and user-facing tooling behind explicit boundaries. Persistent state is separated by technology under `state/`, with project-specific vector data isolated within the Chroma state hierarchy.
 
-### CLI-First Philosophy
-Interaction is intended to be via a dedicated CLI (e.g., `rpai doctor`), routing input through high-level orchestration layers rather than direct module execution.
+See `docs/architecture.md` for the detailed component boundaries, dependency direction, and design patterns used by the current implementation.
 
-### Configuration-Driven Project Onboarding
-Support for multiple projects is achieved entirely via configuration (`projects/*.yaml`) rather than custom code. Environmental configuration is strictly separated from project configuration.
-
-### Persistent State Layout
-Application state is segregated explicitly by technology under the `state/` directory (e.g., Chroma vectors, caches) to preserve long-term operational memory across sessions.
-
-### Project-Context Subsystem
-The core of RPAI operates as a coherent data pipeline that continuously transforms an engineer's active reality into queryable context:
-
-`project config → local repository → documents → index → query → relevant context`
-
-*Note: Future capabilities such as workflow orchestration and GitHub integration are planned but are intentionally separated from the core project-context subsystem.*
+Future capabilities such as workflow orchestration and GitHub integration are intentionally outside the completed project-context subsystem and will be introduced as their requirements become concrete.
