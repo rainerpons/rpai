@@ -9,7 +9,6 @@ from llama_index.core.embeddings import MockEmbedding
 from core.config import load_project_config
 from core.indexing.index import index_documents
 from core.ingestion.local_repo import ingest_local_repository
-from core.retrieval.retrieve import retrieve_context
 
 class DeterministicTestEmbedding(MockEmbedding):
     def __init__(self):
