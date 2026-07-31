@@ -15,7 +15,7 @@ def execute_task(
         raise ValueError("Task must not be empty.")
 
     import core.retrieval
-    from workflow.models import Context
+    from workflow.context_builder import build_context
 
     retrieved_results = core.retrieval.retrieve_context(
         query=task,
@@ -24,12 +24,7 @@ def execute_task(
         state_dir=state_dir,
     )
     
-    context_parts = []
-    for r in retrieved_results:
-        source = r.metadata.get("relative_path", "unknown")
-        context_parts.append(f"Source: {source}\n{r.text}")
-        
-    context = Context(content="\n\n".join(context_parts))
+    context = build_context(retrieved_results)
 
     generated_output = language_model.generate(
         task=task,
