@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from execution.language_model import LanguageModel
-from execution.models import WorkflowResult
+from workflow.language_model import LanguageModel
+from workflow.models import WorkflowResult
 
 def execute_task(
     task: str,
@@ -15,7 +15,7 @@ def execute_task(
         raise ValueError("Task must not be empty.")
 
     import core.retrieval
-    from execution.models import ContextItem
+    from workflow.models import Context
 
     retrieved_results = core.retrieval.retrieve_context(
         query=task,
@@ -24,10 +24,12 @@ def execute_task(
         state_dir=state_dir,
     )
     
-    context = [
-        ContextItem(text=r.text, source=r.metadata.get("relative_path", "unknown")) 
-        for r in retrieved_results
-    ]
+    context_parts = []
+    for r in retrieved_results:
+        source = r.metadata.get("relative_path", "unknown")
+        context_parts.append(f"Source: {source}\n{r.text}")
+        
+    context = Context(content="\n\n".join(context_parts))
 
     generated_output = language_model.generate(
         task=task,

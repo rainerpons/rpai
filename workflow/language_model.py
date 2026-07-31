@@ -1,13 +1,12 @@
 from typing import Protocol
-from collections.abc import Sequence
 
-from execution.models import ContextItem
+from workflow.models import Context
 
 class LanguageModel(Protocol):
     def generate(
         self,
         *,
         task: str,
-        context: Sequence[ContextItem],
+        context: Context,
     ) -> str:
         ...

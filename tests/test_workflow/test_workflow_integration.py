@@ -3,14 +3,14 @@ from pathlib import Path
 
 from llama_index.core.embeddings import MockEmbedding
 
-import execution
+import workflow
 from core.config import load_project_config
 from core.indexing.index import index_documents
 from core.ingestion.local_repo import ingest_local_repository
 
-from execution.orchestration import execute_task
-from execution.models import WorkflowResult
-from tests.test_execution.test_orchestration import FakeLanguageModel
+from workflow.orchestration import execute_task
+from workflow.models import WorkflowResult
+from tests.test_workflow.test_orchestration import FakeLanguageModel
 
 class DeterministicTestEmbedding(MockEmbedding):
     def __init__(self):
@@ -73,5 +73,5 @@ def test_workflow_integration(tmp_path, monkeypatch):
     # Verify context transformation and workflow output
     assert isinstance(result, WorkflowResult)
     assert result.output == "Integration success"
-    assert len(lm.received_context) == 1
-    assert lm.received_context[0].source == "src/apple_module.py"
+    assert "src/apple_module.py" in lm.received_context.content
+    assert "src/orange_module.py" not in lm.received_context.content

@@ -3,19 +3,19 @@ from collections.abc import Sequence
 
 import pytest
 
-import execution
+import workflow
 from core.retrieval.models import RetrievalResult
-from execution.models import WorkflowResult, ContextItem
-from execution.orchestration import execute_task
+from workflow.models import WorkflowResult, Context
+from workflow.orchestration import execute_task
 
 class FakeLanguageModel:
     def __init__(self, return_text: str = "Fake output", raise_exception: Exception | None = None):
         self.return_text = return_text
         self.raise_exception = raise_exception
         self.received_task: str | None = None
-        self.received_context: Sequence[ContextItem] | None = None
+        self.received_context: Context | None = None
 
-    def generate(self, *, task: str, context: Sequence[ContextItem]) -> str:
+    def generate(self, *, task: str, context: Context) -> str:
         self.received_task = task
         self.received_context = context
         if self.raise_exception:
@@ -96,7 +96,7 @@ def test_forward_state_dir(monkeypatch, fake_project_config):
     
     assert captured_state_dir == custom_dir
 
-def test_transforms_retrieval_results_to_context_items(monkeypatch, fake_project_config):
+def test_transforms_retrieval_results_to_context_string(monkeypatch, fake_project_config):
     results = [
         RetrievalResult(text="1", metadata={"relative_path": "file1.txt"}, score=0.9),
         RetrievalResult(text="2", metadata={}, score=0.8),
@@ -110,10 +110,8 @@ def test_transforms_retrieval_results_to_context_items(monkeypatch, fake_project
     lm = FakeLanguageModel()
     execute_task(task="task", project_config=fake_project_config, language_model=lm)
     
-    assert lm.received_context == [
-        ContextItem(text="1", source="file1.txt"),
-        ContextItem(text="2", source="unknown"),
-    ]
+    expected_content = "Source: file1.txt\n1\n\nSource: unknown\n2"
+    assert lm.received_context == Context(content=expected_content)
 
 def test_pass_original_task_to_language_model(monkeypatch, fake_project_config):
     monkeypatch.setattr("core.retrieval.retrieve_context", lambda **kw: [])
@@ -130,7 +128,7 @@ def test_execute_language_model_when_context_is_empty(monkeypatch, fake_project_
     lm = FakeLanguageModel(return_text="Answer to empty context")
     result = execute_task(task="task", project_config=fake_project_config, language_model=lm)
     
-    assert lm.received_context == []
+    assert lm.received_context == Context(content="")
     assert result == WorkflowResult(output="Answer to empty context")
 
 def test_wrap_generated_text_in_workflow_result(monkeypatch, fake_project_config):
