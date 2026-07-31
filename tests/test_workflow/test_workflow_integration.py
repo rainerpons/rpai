@@ -73,5 +73,5 @@ def test_workflow_integration(tmp_path, monkeypatch):
     # Verify context transformation and workflow output
     assert isinstance(result, WorkflowResult)
     assert result.output == "Integration success"
-    assert "src/apple_module.py" in lm.received_context.content
-    assert "src/orange_module.py" not in lm.received_context.content
+    assert len(lm.received_context.entries) == 1
+    assert lm.received_context.entries[0].source == "src/apple_module.py"

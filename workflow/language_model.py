@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from workflow.models import Context
+from workflow.context import Context
 
 class LanguageModel(Protocol):
     def generate(

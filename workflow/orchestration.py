@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import core.retrieval
+from workflow.context_builder import build_context
 from workflow.language_model import LanguageModel
 from workflow.models import WorkflowResult
 
@@ -14,9 +16,6 @@ def execute_task(
     if not task or not task.strip():
         raise ValueError("Task must not be empty.")
 
-    import core.retrieval
-    from workflow.context_builder import build_context
-
     retrieved_results = core.retrieval.retrieve_context(
         query=task,
         project_config=project_config,
@@ -26,9 +25,9 @@ def execute_task(
     
     context = build_context(retrieved_results)
 
-    generated_output = language_model.generate(
+    output = language_model.generate(
         task=task,
         context=context,
     )
 
-    return WorkflowResult(output=generated_output)
+    return WorkflowResult(output=output)

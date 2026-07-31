@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 
 from core.retrieval.models import RetrievalResult
-from workflow.models import Context
+from workflow.context import Context, ContextEntry
 
-def build_context(retrieved_results: Sequence[RetrievalResult]) -> Context:
-    context_parts = []
-    for r in retrieved_results:
+def build_context(results: Sequence[RetrievalResult]) -> Context:
+    entries = []
+    for r in results:
         source = r.metadata.get("relative_path", "unknown")
-        context_parts.append(f"Source: {source}\n{r.text}")
+        entries.append(ContextEntry(content=r.text, source=source))
         
-    return Context(content="\n\n".join(context_parts))
+    return Context(entries=tuple(entries))

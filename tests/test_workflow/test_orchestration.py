@@ -5,7 +5,8 @@ import pytest
 
 import workflow
 from core.retrieval.models import RetrievalResult
-from workflow.models import WorkflowResult, Context
+from workflow.context import Context, ContextEntry
+from workflow.models import WorkflowResult
 from workflow.orchestration import execute_task
 
 class FakeLanguageModel:
@@ -96,7 +97,7 @@ def test_forward_state_dir(monkeypatch, fake_project_config):
     
     assert captured_state_dir == custom_dir
 
-def test_transforms_retrieval_results_to_context_string(monkeypatch, fake_project_config):
+def test_transforms_retrieval_results_to_structured_context(monkeypatch, fake_project_config):
     results = [
         RetrievalResult(text="1", metadata={"relative_path": "file1.txt"}, score=0.9),
         RetrievalResult(text="2", metadata={}, score=0.8),
@@ -110,8 +111,11 @@ def test_transforms_retrieval_results_to_context_string(monkeypatch, fake_projec
     lm = FakeLanguageModel()
     execute_task(task="task", project_config=fake_project_config, language_model=lm)
     
-    expected_content = "Source: file1.txt\n1\n\nSource: unknown\n2"
-    assert lm.received_context == Context(content=expected_content)
+    expected_entries = (
+        ContextEntry(content="1", source="file1.txt"),
+        ContextEntry(content="2", source="unknown"),
+    )
+    assert lm.received_context == Context(entries=expected_entries)
 
 def test_pass_original_task_to_language_model(monkeypatch, fake_project_config):
     monkeypatch.setattr("core.retrieval.retrieve_context", lambda **kw: [])
@@ -128,7 +132,7 @@ def test_execute_language_model_when_context_is_empty(monkeypatch, fake_project_
     lm = FakeLanguageModel(return_text="Answer to empty context")
     result = execute_task(task="task", project_config=fake_project_config, language_model=lm)
     
-    assert lm.received_context == Context(content="")
+    assert lm.received_context == Context(entries=())
     assert result == WorkflowResult(output="Answer to empty context")
 
 def test_wrap_generated_text_in_workflow_result(monkeypatch, fake_project_config):

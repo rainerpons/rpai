@@ -47,7 +47,6 @@ Persistent application state lives under `state/` and is separated by the techno
 
 `doctor` is a user-facing validation boundary. It verifies that a configured project can be used by RPAI and presents actionable validation failures without moving validation concerns into the core project-context pipeline.
 
-
 ## Design Patterns in Use
 
 * **Pipeline / Data Flow**: The core project-context subsystem operates as a unidirectional data pipeline: configurations feed ingestion, ingestion produces internal documents, documents are indexed, and the persisted index is queried for context.
