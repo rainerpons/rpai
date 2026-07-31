@@ -1,9 +1,9 @@
 import yaml
-from pathlib import Path
+
 
 from llama_index.core.embeddings import MockEmbedding
 
-import workflow
+
 from core.config import load_project_config
 from core.indexing.index import index_documents
 from core.ingestion.local_repo import ingest_local_repository

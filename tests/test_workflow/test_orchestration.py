@@ -1,9 +1,9 @@
 from pathlib import Path
-from collections.abc import Sequence
+
 
 import pytest
 
-import workflow
+
 from core.retrieval.models import RetrievalResult
 from workflow.context import Context, ContextEntry
 from workflow.models import WorkflowResult

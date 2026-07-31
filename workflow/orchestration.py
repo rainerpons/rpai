@@ -16,14 +16,14 @@ def execute_task(
     if not task or not task.strip():
         raise ValueError("Task must not be empty.")
 
-    retrieved_results = core.retrieval.retrieve_context(
+    results = core.retrieval.retrieve_context(
         query=task,
         project_config=project_config,
         top_k=top_k,
         state_dir=state_dir,
     )
     
-    context = build_context(retrieved_results)
+    context = build_context(results)
 
     output = language_model.generate(
         task=task,
