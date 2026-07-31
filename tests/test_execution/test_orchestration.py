@@ -3,19 +3,19 @@ from collections.abc import Sequence
 
 import pytest
 
-import workflows
+import execution
 from core.retrieval.models import RetrievalResult
-from workflows.models import WorkflowResult
-from workflows.orchestration import execute_task
+from execution.models import WorkflowResult, ContextItem
+from execution.orchestration import execute_task
 
 class FakeLanguageModel:
     def __init__(self, return_text: str = "Fake output", raise_exception: Exception | None = None):
         self.return_text = return_text
         self.raise_exception = raise_exception
         self.received_task: str | None = None
-        self.received_context: Sequence[RetrievalResult] | None = None
+        self.received_context: Sequence[ContextItem] | None = None
 
-    def generate(self, *, task: str, context: Sequence[RetrievalResult]) -> str:
+    def generate(self, *, task: str, context: Sequence[ContextItem]) -> str:
         self.received_task = task
         self.received_context = context
         if self.raise_exception:
@@ -96,9 +96,9 @@ def test_forward_state_dir(monkeypatch, fake_project_config):
     
     assert captured_state_dir == custom_dir
 
-def test_pass_retrieval_results_to_language_model_unchanged(monkeypatch, fake_project_config):
+def test_transforms_retrieval_results_to_context_items(monkeypatch, fake_project_config):
     results = [
-        RetrievalResult(text="1", metadata={}, score=0.9),
+        RetrievalResult(text="1", metadata={"relative_path": "file1.txt"}, score=0.9),
         RetrievalResult(text="2", metadata={}, score=0.8),
     ]
 
@@ -110,7 +110,10 @@ def test_pass_retrieval_results_to_language_model_unchanged(monkeypatch, fake_pr
     lm = FakeLanguageModel()
     execute_task(task="task", project_config=fake_project_config, language_model=lm)
     
-    assert lm.received_context == results
+    assert lm.received_context == [
+        ContextItem(text="1", source="file1.txt"),
+        ContextItem(text="2", source="unknown"),
+    ]
 
 def test_pass_original_task_to_language_model(monkeypatch, fake_project_config):
     monkeypatch.setattr("core.retrieval.retrieve_context", lambda **kw: [])

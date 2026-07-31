@@ -1,17 +1,16 @@
 import yaml
 from pathlib import Path
-from collections.abc import Sequence
 
 from llama_index.core.embeddings import MockEmbedding
 
-import workflows
+import execution
 from core.config import load_project_config
 from core.indexing.index import index_documents
 from core.ingestion.local_repo import ingest_local_repository
-from core.retrieval.models import RetrievalResult
 
-from workflows.orchestration import execute_task
-from workflows.models import WorkflowResult
+from execution.orchestration import execute_task
+from execution.models import WorkflowResult
+from tests.test_execution.test_orchestration import FakeLanguageModel
 
 class DeterministicTestEmbedding(MockEmbedding):
     def __init__(self):
@@ -29,13 +28,8 @@ class DeterministicTestEmbedding(MockEmbedding):
     def _get_query_embedding(self, query: str) -> list[float]:
         return self._get_text_embedding(query)
 
-class FakeIntegrationLanguageModel:
-    def generate(self, *, task: str, context: Sequence[RetrievalResult]) -> str:
-        paths = [res.metadata.get("relative_path", "") for res in context]
-        return f"Found paths: {', '.join(paths)}"
-
 def test_workflow_integration(tmp_path, monkeypatch):
-    # 1. Setup fixture project
+    # Initialize repository
     state_dir = tmp_path / "state"
     state_dir.mkdir()
     
@@ -56,16 +50,16 @@ def test_workflow_integration(tmp_path, monkeypatch):
         
     loaded_config = load_project_config(config_path)
     
-    # 2. Index project
+    # Index repository
     documents = list(ingest_local_repository(loaded_config))
     embed_model = DeterministicTestEmbedding()
     index_documents(documents, loaded_config, state_dir=state_dir, embed_model=embed_model)
     
-    # 3. Setup mock for retrieval default embedding
+    # Configure retrieval mock
     monkeypatch.setattr("core.retrieval.retrieve.get_default_embedding", lambda: DeterministicTestEmbedding())
     
-    # 4. Execute task
-    lm = FakeIntegrationLanguageModel()
+    # Execute workflow
+    lm = FakeLanguageModel(return_text="Integration success")
     
     task = "Tell me about apple"
     result = execute_task(
@@ -76,7 +70,8 @@ def test_workflow_integration(tmp_path, monkeypatch):
         state_dir=state_dir
     )
     
-    # 5. Assertions
+    # Verify context transformation and workflow output
     assert isinstance(result, WorkflowResult)
-    assert "src/apple_module.py" in result.output
-    assert "src/orange_module.py" not in result.output
+    assert result.output == "Integration success"
+    assert len(lm.received_context) == 1
+    assert lm.received_context[0].source == "src/apple_module.py"

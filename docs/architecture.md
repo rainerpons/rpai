@@ -47,15 +47,6 @@ Persistent application state lives under `state/` and is separated by the techno
 
 `doctor` is a user-facing validation boundary. It verifies that a configured project can be used by RPAI and presents actionable validation failures without moving validation concerns into the core project-context pipeline.
 
-## Ubiquitous Language
-
-The following terms define the core vocabulary used in the workflow and language model execution layer:
-
-*   **Task**: The plain-text user intent or instruction.
-*   **Context**: The retrieved, project-specific information used to inform the model about the repository.
-*   **Provider**: The external service or infrastructure responsible for actual inference (e.g., OpenAI).
-*   **Model**: The domain object representing a specific language model available for workflow execution, completely decoupled from provider-specific types.
-*   **WorkflowResult**: The RPAI-owned object containing the final generated output and any relevant execution metadata, ensuring callers do not depend on provider responses.
 
 ## Design Patterns in Use
 
