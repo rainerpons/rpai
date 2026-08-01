@@ -11,7 +11,8 @@ dependencies = [
     "pyyaml",
     "pathspec",
     "llama-index-embeddings-huggingface",
-    "llama-index-vector-stores-chroma"
+    "llama-index-vector-stores-chroma",
+    "ollama>=0.6.2",
 ]
 
 [build-system]

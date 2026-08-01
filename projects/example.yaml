@@ -1,1 +1,4 @@
 local_repository: .
+language_model:
+  provider: ollama
+  model: llama3.2:3b
