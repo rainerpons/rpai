@@ -1,6 +1,6 @@
 import pytest
 
-from core.language_model_config import LanguageModelConfig
+from providers.config import LanguageModelConfig
 from providers.factory import create_language_model
 from providers.ollama.language_model import OllamaLanguageModel
 

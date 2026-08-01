@@ -1,4 +1,4 @@
-from core.language_model_config import LanguageModelConfig
+from providers.config import LanguageModelConfig
 from workflow.language_model import LanguageModel
 from providers.ollama.language_model import OllamaLanguageModel
 

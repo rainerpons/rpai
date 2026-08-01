@@ -1,5 +1,5 @@
 import pytest
-from core.language_model_config import load_language_model_config, LanguageModelConfig
+from providers.config import load_language_model_config, LanguageModelConfig
 
 
 def test_load_valid_language_model_config():

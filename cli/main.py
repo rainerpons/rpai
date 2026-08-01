@@ -2,7 +2,7 @@ import argparse
 import sys
 from doctor.project import validate_project
 from core.config import load_project_config
-from core.language_model_config import load_language_model_config
+from providers.config import load_language_model_config
 from providers.factory import create_language_model
 from workflow.orchestration import execute_task
 
