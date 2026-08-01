@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -8,4 +8,4 @@ class ContextEntry:
 
 @dataclass(frozen=True)
 class Context:
-    entries: tuple[ContextEntry, ...]
+    entries: tuple[ContextEntry, ...] = field(default_factory=tuple)
