@@ -10,7 +10,21 @@ from core.ingestion.local_repo import ingest_local_repository
 
 from workflow.orchestration import execute_task
 from workflow.models import WorkflowResult
-from tests.test_workflow.test_orchestration import FakeLanguageModel
+from workflow.context import Context
+
+class FakeLanguageModel:
+    def __init__(self, return_text: str = "Fake output", raise_exception: Exception | None = None):
+        self.return_text = return_text
+        self.raise_exception = raise_exception
+        self.received_task: str | None = None
+        self.received_context: Context | None = None
+
+    def generate(self, *, task: str, context: Context) -> str:
+        self.received_task = task
+        self.received_context = context
+        if self.raise_exception:
+            raise self.raise_exception
+        return self.return_text
 
 class DeterministicTestEmbedding(MockEmbedding):
     def __init__(self):

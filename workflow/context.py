@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from collections.abc import Sequence
+
 
 @dataclass(frozen=True)
 class ContextEntry:
@@ -8,4 +8,4 @@ class ContextEntry:
 
 @dataclass(frozen=True)
 class Context:
-    entries: Sequence[ContextEntry]
+    entries: tuple[ContextEntry, ...]
