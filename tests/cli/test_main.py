@@ -5,15 +5,19 @@ from cli.main import handle_run, EXIT_SUCCESS, EXIT_FAILURE
 
 
 @patch("cli.main.load_project_config")
+@patch("cli.main.load_language_model_config")
 @patch("cli.main.create_language_model")
 @patch("cli.main.execute_task")
-def test_handle_run_success(mock_execute_task, mock_create_language_model, mock_load_project_config, capsys):
+def test_handle_run_success(mock_execute_task, mock_create_language_model, mock_load_language_model_config, mock_load_project_config, capsys):
     mock_args = MagicMock()
     mock_args.project = "project.yaml"
     mock_args.task = "My task"
     
     mock_project_config = {"project": "config"}
     mock_load_project_config.return_value = mock_project_config
+    
+    mock_lm_config = MagicMock()
+    mock_load_language_model_config.return_value = mock_lm_config
     
     mock_language_model = MagicMock()
     mock_create_language_model.return_value = mock_language_model
@@ -27,7 +31,8 @@ def test_handle_run_success(mock_execute_task, mock_create_language_model, mock_
     assert result == EXIT_SUCCESS
     
     mock_load_project_config.assert_called_once_with("project.yaml")
-    mock_create_language_model.assert_called_once_with(mock_project_config)
+    mock_load_language_model_config.assert_called_once_with(mock_project_config)
+    mock_create_language_model.assert_called_once_with(mock_lm_config)
     mock_execute_task.assert_called_once_with("My task", mock_project_config, mock_language_model)
     
     captured = capsys.readouterr()

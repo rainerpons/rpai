@@ -2,6 +2,7 @@ import argparse
 import sys
 from doctor.project import validate_project
 from core.config import load_project_config
+from core.language_model_config import load_language_model_config
 from providers.factory import create_language_model
 from workflow.orchestration import execute_task
 
@@ -24,7 +25,8 @@ def handle_doctor(args: argparse.Namespace) -> int:
 def handle_run(args: argparse.Namespace) -> int:
     try:
         project_config = load_project_config(args.project)
-        language_model = create_language_model(project_config)
+        lm_config = load_language_model_config(project_config)
+        language_model = create_language_model(lm_config)
         result = execute_task(args.task, project_config, language_model)
         print(result.output)
         return EXIT_SUCCESS
