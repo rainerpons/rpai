@@ -27,16 +27,25 @@ def test_load_language_model_not_mapping():
         load_language_model_config(config)
 
 
-def test_load_invalid_provider():
+def test_load_missing_provider():
     config = {
         "language_model": {
-            "provider": "openai",
             "model": "gpt-4"
         }
     }
-    with pytest.raises(ValueError, match="Configuration 'provider' must equal 'ollama'."):
+    with pytest.raises(ValueError, match="Configuration 'provider' must be a non-empty string."):
         load_language_model_config(config)
 
+
+def test_load_blank_provider():
+    config = {
+        "language_model": {
+            "provider": "",
+            "model": "gpt-4"
+        }
+    }
+    with pytest.raises(ValueError, match="Configuration 'provider' must be a non-empty string."):
+        load_language_model_config(config)
 
 def test_load_missing_model():
     config = {

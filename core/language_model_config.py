@@ -17,9 +17,8 @@ def load_language_model_config(project_config: Dict[str, Any]) -> LanguageModelC
         raise ValueError("Configuration 'language_model' must be a mapping.")
     
     provider = lm_config.get("provider")
-    if provider != "ollama":
-        raise ValueError("Configuration 'provider' must equal 'ollama'.")
-    
+    if not isinstance(provider, str) or not provider:
+        raise ValueError("Configuration 'provider' must be a non-empty string.")
     model = lm_config.get("model")
     if not isinstance(model, str) or not model:
         raise ValueError("Configuration 'model' must be a non-empty string.")
