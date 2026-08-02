@@ -47,13 +47,15 @@ def delete_project_index(
     state_dir: Path = Path("state"),
 ) -> None:
     project_state_dir = get_project_state_dir(project_config, state_dir)
-    if project_state_dir.exists():
-        shutil.rmtree(project_state_dir)
-        try:
-            import chromadb.api.client
-            chromadb.api.client.SharedSystemClient.clear_system_cache()
-        except Exception:
-            pass
+    if not project_state_dir.exists():
+        return
+        
+    shutil.rmtree(project_state_dir)
+    try:
+        import chromadb.api.client
+        chromadb.api.client.SharedSystemClient.clear_system_cache()
+    except Exception:
+        pass
 
 def get_storage_context(project_config: dict, state_dir: Path = Path("state")) -> StorageContext:
     project_state_dir = get_project_state_dir(project_config, state_dir)

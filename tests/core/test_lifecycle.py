@@ -13,7 +13,8 @@ def test_ensure_missing_index(mock_exists, mock_build):
     ensure_project_index({"name": "test"}, state_dir=Path("/state"), on_progress=progress)
     
     mock_build.assert_called_once_with({"name": "test"}, state_dir=Path("/state"))
-    assert progress.call_count == 2
+    progress.assert_any_call("Creating project index...")
+    progress.assert_any_call("Project index created.")
 
 @patch("core.indexing.lifecycle.build_project_index")
 @patch("core.indexing.lifecycle.project_index_exists")

@@ -74,3 +74,12 @@ except Exception as e:
     assert data3["output"] == "fake response"
     assert "Existing project index could not be loaded. Rebuilding..." in data3["progress"]
     assert "Project index rebuilt." in data3["progress"]
+    
+    (tmp_path / "res.json").unlink()
+    subprocess.run([sys.executable, str(script_path)], check=True)
+    with open(tmp_path / "res.json") as f:
+        data4 = json.load(f)
+    assert data4["output"] == "fake response"
+    assert "Existing project index could not be loaded. Rebuilding..." not in data4["progress"]
+    assert "Project index rebuilt." not in data4["progress"]
+    assert "Creating project index..." not in data4["progress"]

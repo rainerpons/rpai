@@ -33,8 +33,13 @@ def test_handle_run_success(mock_execute_task, mock_create_language_model, mock_
     mock_load_project_config.assert_called_once_with("project.yaml")
     mock_load_language_model_config.assert_called_once_with(mock_project_config)
     mock_create_language_model.assert_called_once_with(mock_lm_config)
-    mock_execute_task.assert_called_once_with("My task", mock_project_config, mock_language_model, progress=mock_execute_task.call_args.kwargs.get("progress"))
+    from unittest.mock import ANY
+    mock_execute_task.assert_called_once_with("My task", mock_project_config, mock_language_model, progress=ANY)
     
+    # Verify the progress callback is actually callable
+    progress_cb = mock_execute_task.call_args.kwargs["progress"]
+    assert callable(progress_cb)
+
     captured = capsys.readouterr()
     assert "Generated workflow result text\n" in captured.out
     assert captured.err == ""

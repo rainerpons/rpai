@@ -38,9 +38,6 @@ def handle_run(args: argparse.Namespace) -> int:
         )
         print(result.output)
         return EXIT_SUCCESS
-    except ProjectIndexError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return EXIT_FAILURE
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return EXIT_FAILURE

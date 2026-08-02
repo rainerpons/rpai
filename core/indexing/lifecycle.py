@@ -10,13 +10,11 @@ def ensure_project_index(
     state_dir: Path = Path("state"),
     on_progress: Optional[Callable[[str], None]] = None,
 ) -> None:
+    progress = on_progress or (lambda msg: None)
+
     if project_index_exists(project_config, state_dir=state_dir):
         return
         
-    if on_progress:
-        on_progress("Creating project index...")
-        
+    progress("Creating project index...")
     build_project_index(project_config, state_dir=state_dir)
-    
-    if on_progress:
-        on_progress("Project index created.")
+    progress("Project index created.")

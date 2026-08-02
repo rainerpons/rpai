@@ -22,23 +22,10 @@ def execute_task(
     if not task or not task.strip():
         raise ValueError("Task must not be empty.")
 
+    cb = progress or (lambda msg: None)
     ensure_project_index(project_config, state_dir=state_dir, on_progress=progress)
 
-    try:
-        results = core.retrieval.retrieve_context(
-            query=task,
-            project_config=project_config,
-            top_k=top_k,
-            state_dir=state_dir,
-        )
-    except Exception as error:
-        if progress:
-            progress("Existing project index could not be loaded. Rebuilding...")
-        delete_project_index(project_config, state_dir=state_dir)
-        build_project_index(project_config, state_dir=state_dir)
-        if progress:
-            progress("Project index rebuilt.")
-            
+    for attempt in range(2):
         try:
             results = core.retrieval.retrieve_context(
                 query=task,
@@ -46,10 +33,17 @@ def execute_task(
                 top_k=top_k,
                 state_dir=state_dir,
             )
-        except Exception as retry_error:
-            raise ProjectIndexError(
-                "The project index could not be prepared. Run the command again after checking the project repository and local state permissions."
-            ) from retry_error
+            break
+        except Exception as error:
+            if attempt == 1:
+                raise ProjectIndexError(
+                    "The project index could not be prepared. Run the command again after checking the project repository and local state permissions."
+                ) from error
+                
+            cb("Existing project index could not be loaded. Rebuilding...")
+            delete_project_index(project_config, state_dir=state_dir)
+            build_project_index(project_config, state_dir=state_dir)
+            cb("Project index rebuilt.")
 
     context = build_context(results)
 

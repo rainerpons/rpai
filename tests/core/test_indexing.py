@@ -268,6 +268,19 @@ def test_project_index_exists_empty_state(tmp_path):
     project_state.mkdir(parents=True)
     assert not project_index_exists(project_config, state_dir)
 
+def test_project_index_exists_partial_state(tmp_path):
+    state_dir = tmp_path / "state"
+    project_config = {"name": "test", "local_repository": str(tmp_path)}
+    project_state = get_project_state_dir(project_config, state_dir)
+    project_state.mkdir(parents=True)
+    
+    (project_state / "docstore.json").write_text("{}")
+    assert not project_index_exists(project_config, state_dir)
+    
+    (project_state / "docstore.json").unlink()
+    (project_state / "chroma.sqlite3").write_text("")
+    assert not project_index_exists(project_config, state_dir)
+
 def test_project_index_exists_persisted(tmp_path, temp_state_dir, mock_embed_model):
     project_config = {"name": "test", "local_repository": str(tmp_path)}
     index_documents([Document(Path("f.txt"), "A", {})], project_config, temp_state_dir, mock_embed_model)
