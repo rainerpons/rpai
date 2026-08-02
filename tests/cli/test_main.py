@@ -33,7 +33,7 @@ def test_handle_run_success(mock_execute_task, mock_create_language_model, mock_
     mock_load_project_config.assert_called_once_with("project.yaml")
     mock_load_language_model_config.assert_called_once_with(mock_project_config)
     mock_create_language_model.assert_called_once_with(mock_lm_config)
-    mock_execute_task.assert_called_once_with("My task", mock_project_config, mock_language_model)
+    mock_execute_task.assert_called_once_with("My task", mock_project_config, mock_language_model, progress=mock_execute_task.call_args.kwargs.get("progress"))
     
     captured = capsys.readouterr()
     assert "Generated workflow result text\n" in captured.out
@@ -55,3 +55,50 @@ def test_handle_run_failure(mock_load_project_config, capsys):
     captured = capsys.readouterr()
     assert captured.out == ""
     assert "Error: Configuration error\n" in captured.err
+
+from workflow.orchestration import ProjectIndexError
+
+@patch("cli.main.load_project_config")
+@patch("cli.main.load_language_model_config")
+@patch("cli.main.create_language_model")
+@patch("cli.main.execute_task")
+def test_handle_run_progress_to_stderr(mock_execute_task, mock_create, mock_load_lm, mock_load_proj, capsys):
+    mock_args = MagicMock()
+    mock_args.project = "project.yaml"
+    mock_args.task = "My task"
+    
+    mock_result = MagicMock()
+    mock_result.output = "Model output"
+    
+    def fake_execute(task, project_config, language_model, progress=None):
+        if progress:
+            progress("Indexing progress...")
+        return mock_result
+        
+    mock_execute_task.side_effect = fake_execute
+    
+    result = handle_run(mock_args)
+    
+    assert result == EXIT_SUCCESS
+    captured = capsys.readouterr()
+    assert "Indexing progress...\n" in captured.err
+    assert "Model output\n" in captured.out
+
+@patch("cli.main.load_project_config")
+@patch("cli.main.load_language_model_config")
+@patch("cli.main.create_language_model")
+@patch("cli.main.execute_task")
+def test_handle_run_project_index_error(mock_execute_task, mock_create, mock_load_lm, mock_load_proj, capsys):
+    mock_args = MagicMock()
+    mock_args.project = "project.yaml"
+    mock_args.task = "My task"
+    
+    mock_execute_task.side_effect = ProjectIndexError("The project index could not be prepared.")
+    
+    result = handle_run(mock_args)
+    
+    assert result == EXIT_FAILURE
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "Error: The project index could not be prepared.\n" in captured.err
+    assert "Traceback" not in captured.err
