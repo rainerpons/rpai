@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import core.retrieval
-from core.indexing import ensure_project_index, delete_project_index, build_project_index
+from core.indexing import ensure_project_index, delete_project_index, build_project_index, IndexLoadError
 from workflow.context_builder import build_context
 from workflow.language_model import LanguageModel
 from workflow.models import WorkflowResult
@@ -34,7 +34,7 @@ def execute_task(
                 state_dir=state_dir,
             )
             break
-        except Exception as error:
+        except IndexLoadError as error:
             if attempt == 1:
                 raise ProjectIndexError(
                     "The project index could not be prepared. Run the command again after checking the project repository and local state permissions."

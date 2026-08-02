@@ -8,6 +8,7 @@ from core.retrieval.models import RetrievalResult
 from workflow.context import Context, ContextEntry
 from workflow.models import WorkflowResult
 from workflow.orchestration import execute_task, ProjectIndexError
+from core.indexing.store import IndexLoadError
 
 class FakeLanguageModel:
     def __init__(self, return_text: str = "Fake output", raise_exception: Exception | None = None):
@@ -192,7 +193,7 @@ def test_index_recovery_success(monkeypatch, fake_project_config):
         retrieval_calls += 1
         calls.append(f"retrieve_{retrieval_calls}")
         if retrieval_calls == 1:
-            raise RuntimeError("Corrupted index")
+            raise IndexLoadError("Corrupted index")
         return []
         
     monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)
@@ -201,6 +202,25 @@ def test_index_recovery_success(monkeypatch, fake_project_config):
     
     assert calls == ["ensure", "retrieve_1", "delete", "build", "retrieve_2"]
     
+def test_unrelated_retrieval_error_propagates_unchanged(monkeypatch, fake_project_config):
+    calls = []
+    
+    monkeypatch.setattr("workflow.orchestration.ensure_project_index", lambda *a, **kw: calls.append("ensure"))
+    monkeypatch.setattr("workflow.orchestration.delete_project_index", lambda *a, **kw: calls.append("delete"))
+    monkeypatch.setattr("workflow.orchestration.build_project_index", lambda *a, **kw: calls.append("build"))
+    
+    def fake_retrieve(**kw):
+        calls.append("retrieve")
+        raise RuntimeError("Some other error")
+        
+    monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)
+    
+    with pytest.raises(RuntimeError, match="Some other error"):
+        execute_task(task="task", project_config=fake_project_config, language_model=FakeLanguageModel())
+        
+    # Should not attempt to delete or rebuild
+    assert calls == ["ensure", "retrieve"]
+
 def test_index_recovery_failure_raises_project_index_error(monkeypatch, fake_project_config):
     calls = []
     
@@ -210,7 +230,7 @@ def test_index_recovery_failure_raises_project_index_error(monkeypatch, fake_pro
     
     def fake_retrieve(**kw):
         calls.append("retrieve")
-        raise RuntimeError("Corrupted index")
+        raise IndexLoadError("Corrupted index")
         
     monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)
     
@@ -233,7 +253,7 @@ def test_recovery_progress_messages(monkeypatch, fake_project_config):
         nonlocal retrieval_calls
         retrieval_calls += 1
         if retrieval_calls == 1:
-            raise RuntimeError("Corrupted")
+            raise IndexLoadError("Corrupted")
         return []
         
     monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)

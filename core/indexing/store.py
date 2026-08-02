@@ -10,6 +10,10 @@ from llama_index.core.storage.docstore import SimpleDocumentStore
 
 from core.config import resolve_local_repository
 
+class IndexLoadError(Exception):
+    """Raised when an existing project index cannot be loaded or read."""
+    pass
+
 def _get_project_storage_key(project_config: dict) -> str:
     """
     Derives a deterministic, filesystem-safe directory name for a project.
@@ -60,19 +64,21 @@ def delete_project_index(
 def get_storage_context(project_config: dict, state_dir: Path = Path("state")) -> StorageContext:
     project_state_dir = get_project_state_dir(project_config, state_dir)
     project_state_dir.mkdir(parents=True, exist_ok=True)
-    
-    chroma_client = chromadb.PersistentClient(path=str(project_state_dir))
-    chroma_collection = chroma_client.get_or_create_collection("project_context")
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-    
-    docstore_path = project_state_dir / "docstore.json"
-    if docstore_path.exists():
-        docstore = SimpleDocumentStore.from_persist_path(str(docstore_path))
-    else:
-        docstore = SimpleDocumentStore()
+    try:
+        chroma_client = chromadb.PersistentClient(path=str(project_state_dir))
+        chroma_collection = chroma_client.get_or_create_collection("project_context")
+        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
         
-    return StorageContext.from_defaults(
-        vector_store=vector_store,
-        docstore=docstore
-    )
+        docstore_path = project_state_dir / "docstore.json"
+        if docstore_path.exists():
+            docstore = SimpleDocumentStore.from_persist_path(str(docstore_path))
+        else:
+            docstore = SimpleDocumentStore()
+            
+        return StorageContext.from_defaults(
+            vector_store=vector_store,
+            docstore=docstore
+        )
+    except Exception as e:
+        raise IndexLoadError(f"Failed to load project index from {project_state_dir}") from e
 
