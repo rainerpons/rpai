@@ -1,5 +1,6 @@
 import re
 import hashlib
+import shutil
 from pathlib import Path
 
 import chromadb
@@ -8,6 +9,10 @@ from llama_index.core.storage.storage_context import StorageContext
 from llama_index.core.storage.docstore import SimpleDocumentStore
 
 from core.config import resolve_local_repository
+
+class IndexLoadError(RuntimeError):
+    """Raised when an existing project index cannot be loaded or read."""
+    pass
 
 def _get_project_storage_key(project_config: dict) -> str:
     """
@@ -31,17 +36,48 @@ def get_project_state_dir(project_config: dict, state_dir: Path = Path("state"))
     project_key = _get_project_storage_key(project_config)
     return state_dir / "chroma" / project_key
 
+def project_index_exists(project_config: dict, state_dir: Path = Path("state")) -> bool:
+    project_state_dir = get_project_state_dir(project_config, state_dir)
+    if not project_state_dir.exists():
+        return False
+        
+    docstore_path = project_state_dir / "docstore.json"
+    chroma_db_path = project_state_dir / "chroma.sqlite3"
+    
+    return docstore_path.exists() and chroma_db_path.exists()
+
+def delete_project_index(
+    project_config: dict,
+    state_dir: Path = Path("state"),
+) -> None:
+    project_state_dir = get_project_state_dir(project_config, state_dir)
+    if not project_state_dir.exists():
+        return
+        
+    shutil.rmtree(project_state_dir)
+    try:
+        import chromadb.api.client
+        chromadb.api.client.SharedSystemClient.clear_system_cache()
+    except Exception:
+        pass
+
 def get_storage_context(project_config: dict, state_dir: Path = Path("state")) -> StorageContext:
     project_state_dir = get_project_state_dir(project_config, state_dir)
     project_state_dir.mkdir(parents=True, exist_ok=True)
-    
-    chroma_client = chromadb.PersistentClient(path=str(project_state_dir))
-    chroma_collection = chroma_client.get_or_create_collection("project_context")
+    try:
+        chroma_client = chromadb.PersistentClient(path=str(project_state_dir))
+        chroma_collection = chroma_client.get_or_create_collection("project_context")
+    except Exception as e:
+        raise IndexLoadError(f"Failed to load Chroma vector store from {project_state_dir}") from e
+        
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     
     docstore_path = project_state_dir / "docstore.json"
     if docstore_path.exists():
-        docstore = SimpleDocumentStore.from_persist_path(str(docstore_path))
+        try:
+            docstore = SimpleDocumentStore.from_persist_path(str(docstore_path))
+        except Exception as e:
+            raise IndexLoadError(f"Failed to load document store from {docstore_path}") from e
     else:
         docstore = SimpleDocumentStore()
         

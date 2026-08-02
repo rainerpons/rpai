@@ -4,7 +4,7 @@ from doctor.project import validate_project
 from core.config import load_project_config
 from providers.config import load_language_model_config
 from providers.factory import create_language_model
-from workflow.orchestration import execute_task
+from workflow.orchestration import execute_task, ProjectIndexError
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
@@ -27,7 +27,12 @@ def handle_run(args: argparse.Namespace) -> int:
         project_config = load_project_config(args.project)
         lm_config = load_language_model_config(project_config)
         language_model = create_language_model(lm_config)
-        result = execute_task(args.task, project_config, language_model)
+        result = execute_task(
+            args.task, 
+            project_config, 
+            language_model,
+            progress=lambda msg: print(msg, file=sys.stderr)
+        )
         print(result.output)
         return EXIT_SUCCESS
     except Exception as e:
