@@ -10,7 +10,7 @@ from llama_index.core.storage.docstore import SimpleDocumentStore
 
 from core.config import resolve_local_repository
 
-class IndexLoadError(Exception):
+class IndexLoadError(RuntimeError):
     """Raised when an existing project index cannot be loaded or read."""
     pass
 
