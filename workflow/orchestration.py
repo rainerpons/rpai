@@ -10,6 +10,20 @@ from workflow.models import WorkflowResult
 class ProjectIndexError(RuntimeError):
     pass
 
+def _retrieve(task: str, project_config: dict, top_k: int, state_dir: Path) -> list:
+    return core.retrieval.retrieve_context(
+        query=task,
+        project_config=project_config,
+        top_k=top_k,
+        state_dir=state_dir,
+    )
+
+def _recover_project_index(project_config: dict, state_dir: Path, cb: Callable[[str], None]) -> None:
+    cb("Existing project index could not be loaded. Rebuilding...")
+    delete_project_index(project_config, state_dir=state_dir)
+    build_project_index(project_config, state_dir=state_dir)
+    cb("Project index rebuilt.")
+
 def _retrieve_with_recovery(
     task: str,
     project_config: dict,
@@ -18,25 +32,12 @@ def _retrieve_with_recovery(
     cb: Callable[[str], None],
 ) -> list:
     try:
-        return core.retrieval.retrieve_context(
-            query=task,
-            project_config=project_config,
-            top_k=top_k,
-            state_dir=state_dir,
-        )
+        return _retrieve(task, project_config, top_k, state_dir)
     except IndexLoadError:
-        cb("Existing project index could not be loaded. Rebuilding...")
-        delete_project_index(project_config, state_dir=state_dir)
-        build_project_index(project_config, state_dir=state_dir)
-        cb("Project index rebuilt.")
+        _recover_project_index(project_config, state_dir, cb)
         
         try:
-            return core.retrieval.retrieve_context(
-                query=task,
-                project_config=project_config,
-                top_k=top_k,
-                state_dir=state_dir,
-            )
+            return _retrieve(task, project_config, top_k, state_dir)
         except IndexLoadError as error:
             raise ProjectIndexError(
                 "The project index could not be prepared. Run the command again after checking the project repository and local state permissions."

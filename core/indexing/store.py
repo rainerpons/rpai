@@ -67,18 +67,22 @@ def get_storage_context(project_config: dict, state_dir: Path = Path("state")) -
     try:
         chroma_client = chromadb.PersistentClient(path=str(project_state_dir))
         chroma_collection = chroma_client.get_or_create_collection("project_context")
-        vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-        
-        docstore_path = project_state_dir / "docstore.json"
-        if docstore_path.exists():
-            docstore = SimpleDocumentStore.from_persist_path(str(docstore_path))
-        else:
-            docstore = SimpleDocumentStore()
-            
-        return StorageContext.from_defaults(
-            vector_store=vector_store,
-            docstore=docstore
-        )
     except Exception as e:
-        raise IndexLoadError(f"Failed to load project index from {project_state_dir}") from e
+        raise IndexLoadError(f"Failed to load Chroma vector store from {project_state_dir}") from e
+        
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    
+    docstore_path = project_state_dir / "docstore.json"
+    if docstore_path.exists():
+        try:
+            docstore = SimpleDocumentStore.from_persist_path(str(docstore_path))
+        except Exception as e:
+            raise IndexLoadError(f"Failed to load document store from {docstore_path}") from e
+    else:
+        docstore = SimpleDocumentStore()
+        
+    return StorageContext.from_defaults(
+        vector_store=vector_store,
+        docstore=docstore
+    )
 
