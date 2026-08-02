@@ -23,9 +23,6 @@ def handle_doctor(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 def handle_run(args: argparse.Namespace) -> int:
-    def progress_callback(msg: str) -> None:
-        print(msg, file=sys.stderr)
-        
     try:
         project_config = load_project_config(args.project)
         lm_config = load_language_model_config(project_config)
@@ -34,7 +31,7 @@ def handle_run(args: argparse.Namespace) -> int:
             args.task, 
             project_config, 
             language_model,
-            progress=progress_callback
+            progress=lambda msg: print(msg, file=sys.stderr)
         )
         print(result.output)
         return EXIT_SUCCESS
