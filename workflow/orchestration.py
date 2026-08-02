@@ -10,6 +10,38 @@ from workflow.models import WorkflowResult
 class ProjectIndexError(RuntimeError):
     pass
 
+def _retrieve_with_recovery(
+    task: str,
+    project_config: dict,
+    top_k: int,
+    state_dir: Path,
+    cb: Callable[[str], None],
+) -> list:
+    try:
+        return core.retrieval.retrieve_context(
+            query=task,
+            project_config=project_config,
+            top_k=top_k,
+            state_dir=state_dir,
+        )
+    except IndexLoadError:
+        cb("Existing project index could not be loaded. Rebuilding...")
+        delete_project_index(project_config, state_dir=state_dir)
+        build_project_index(project_config, state_dir=state_dir)
+        cb("Project index rebuilt.")
+        
+        try:
+            return core.retrieval.retrieve_context(
+                query=task,
+                project_config=project_config,
+                top_k=top_k,
+                state_dir=state_dir,
+            )
+        except IndexLoadError as error:
+            raise ProjectIndexError(
+                "The project index could not be prepared. Run the command again after checking the project repository and local state permissions."
+            ) from error
+
 def execute_task(
     task: str,
     project_config: dict,
@@ -25,25 +57,13 @@ def execute_task(
     cb = progress or (lambda msg: None)
     ensure_project_index(project_config, state_dir=state_dir, on_progress=progress)
 
-    for attempt in range(2):
-        try:
-            results = core.retrieval.retrieve_context(
-                query=task,
-                project_config=project_config,
-                top_k=top_k,
-                state_dir=state_dir,
-            )
-            break
-        except IndexLoadError as error:
-            if attempt == 1:
-                raise ProjectIndexError(
-                    "The project index could not be prepared. Run the command again after checking the project repository and local state permissions."
-                ) from error
-                
-            cb("Existing project index could not be loaded. Rebuilding...")
-            delete_project_index(project_config, state_dir=state_dir)
-            build_project_index(project_config, state_dir=state_dir)
-            cb("Project index rebuilt.")
+    results = _retrieve_with_recovery(
+        task=task,
+        project_config=project_config,
+        top_k=top_k,
+        state_dir=state_dir,
+        cb=cb,
+    )
 
     context = build_context(results)
 
