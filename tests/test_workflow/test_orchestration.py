@@ -7,7 +7,7 @@ import pytest
 from core.retrieval.models import RetrievalResult
 from workflow.context import Context, ContextEntry
 from workflow.models import WorkflowResult
-from workflow.orchestration import execute_task
+from workflow.orchestration import execute_task, ProjectIndexError
 
 class FakeLanguageModel:
     def __init__(self, return_text: str = "Fake output", raise_exception: Exception | None = None):
@@ -24,8 +24,10 @@ class FakeLanguageModel:
         return self.return_text
 
 @pytest.fixture
-def fake_project_config() -> dict:
-    return {"local_repository": "/fake/repo"}
+def fake_project_config(tmp_path) -> dict:
+    repo = tmp_path / "fake_repo"
+    repo.mkdir()
+    return {"name": "test", "local_repository": str(repo)}
 
 def test_reject_empty_task(fake_project_config):
     lm = FakeLanguageModel()
@@ -91,6 +93,7 @@ def test_forward_state_dir(monkeypatch, fake_project_config):
         return []
 
     monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)
+    monkeypatch.setattr("workflow.orchestration.ensure_project_index", lambda *a, **kw: None)
 
     custom_dir = Path("/custom/state")
     execute_task(task="task", project_config=fake_project_config, language_model=FakeLanguageModel(), state_dir=custom_dir)
@@ -153,23 +156,9 @@ def test_preserve_generated_output_exactly(monkeypatch, fake_project_config):
     
     assert result.output == exact_output
 
-def test_propagate_retrieval_exceptions(monkeypatch, fake_project_config):
-    class FakeRetrievalError(Exception):
-        pass
-
-    def fake_retrieve(query, project_config, top_k, state_dir):
-        raise FakeRetrievalError("Retrieval failed")
-
-    monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)
-
-    lm = FakeLanguageModel()
-    with pytest.raises(FakeRetrievalError, match="Retrieval failed"):
-        execute_task(task="task", project_config=fake_project_config, language_model=lm)
-        
-    assert lm.received_task is None
-
 def test_propagate_language_model_exceptions(monkeypatch, fake_project_config):
     monkeypatch.setattr("core.retrieval.retrieve_context", lambda **kw: [])
+    monkeypatch.setattr("workflow.orchestration.ensure_project_index", lambda *a, **kw: None)
 
     class FakeLMError(Exception):
         pass
@@ -177,3 +166,81 @@ def test_propagate_language_model_exceptions(monkeypatch, fake_project_config):
     lm = FakeLanguageModel(raise_exception=FakeLMError("LM failed"))
     with pytest.raises(FakeLMError, match="LM failed"):
         execute_task(task="task", project_config=fake_project_config, language_model=lm)
+
+def test_index_lifecycle_happy_path(monkeypatch, fake_project_config):
+    calls = []
+    
+    monkeypatch.setattr("workflow.orchestration.ensure_project_index", lambda *a, **kw: calls.append("ensure"))
+    monkeypatch.setattr("core.retrieval.retrieve_context", lambda **kw: calls.append("retrieve") or [])
+    monkeypatch.setattr("workflow.orchestration.delete_project_index", lambda *a, **kw: calls.append("delete"))
+    monkeypatch.setattr("workflow.orchestration.build_project_index", lambda *a, **kw: calls.append("build"))
+    
+    execute_task(task="task", project_config=fake_project_config, language_model=FakeLanguageModel())
+    
+    assert calls == ["ensure", "retrieve"]
+
+def test_index_recovery_success(monkeypatch, fake_project_config):
+    calls = []
+    
+    monkeypatch.setattr("workflow.orchestration.ensure_project_index", lambda *a, **kw: calls.append("ensure"))
+    monkeypatch.setattr("workflow.orchestration.delete_project_index", lambda *a, **kw: calls.append("delete"))
+    monkeypatch.setattr("workflow.orchestration.build_project_index", lambda *a, **kw: calls.append("build"))
+    
+    retrieval_calls = 0
+    def fake_retrieve(**kw):
+        nonlocal retrieval_calls
+        retrieval_calls += 1
+        calls.append(f"retrieve_{retrieval_calls}")
+        if retrieval_calls == 1:
+            raise RuntimeError("Corrupted index")
+        return []
+        
+    monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)
+    
+    execute_task(task="task", project_config=fake_project_config, language_model=FakeLanguageModel())
+    
+    assert calls == ["ensure", "retrieve_1", "delete", "build", "retrieve_2"]
+    
+def test_index_recovery_failure_raises_project_index_error(monkeypatch, fake_project_config):
+    calls = []
+    
+    monkeypatch.setattr("workflow.orchestration.ensure_project_index", lambda *a, **kw: calls.append("ensure"))
+    monkeypatch.setattr("workflow.orchestration.delete_project_index", lambda *a, **kw: calls.append("delete"))
+    monkeypatch.setattr("workflow.orchestration.build_project_index", lambda *a, **kw: calls.append("build"))
+    
+    def fake_retrieve(**kw):
+        calls.append("retrieve")
+        raise RuntimeError("Corrupted index")
+        
+    monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)
+    
+    with pytest.raises(ProjectIndexError, match="The project index could not be prepared"):
+        execute_task(task="task", project_config=fake_project_config, language_model=FakeLanguageModel())
+        
+    assert calls == ["ensure", "retrieve", "delete", "build", "retrieve"]
+
+def test_recovery_progress_messages(monkeypatch, fake_project_config):
+    messages = []
+    def progress(msg):
+        messages.append(msg)
+        
+    monkeypatch.setattr("workflow.orchestration.ensure_project_index", lambda *a, **kw: None)
+    monkeypatch.setattr("workflow.orchestration.delete_project_index", lambda *a, **kw: None)
+    monkeypatch.setattr("workflow.orchestration.build_project_index", lambda *a, **kw: None)
+    
+    retrieval_calls = 0
+    def fake_retrieve(**kw):
+        nonlocal retrieval_calls
+        retrieval_calls += 1
+        if retrieval_calls == 1:
+            raise RuntimeError("Corrupted")
+        return []
+        
+    monkeypatch.setattr("core.retrieval.retrieve_context", fake_retrieve)
+    
+    execute_task(task="task", project_config=fake_project_config, language_model=FakeLanguageModel(), progress=progress)
+    
+    assert messages == [
+        "Existing project index could not be loaded. Rebuilding...",
+        "Project index rebuilt."
+    ]
