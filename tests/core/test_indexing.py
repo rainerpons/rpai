@@ -5,7 +5,7 @@ from unittest.mock import patch
 from llama_index.core.embeddings import MockEmbedding
 
 from core.ingestion.models import Document
-from core.indexing.store import get_storage_context, _get_project_storage_key
+from core.indexing.store import get_storage_context, _get_project_storage_key, project_index_exists, delete_project_index, get_project_state_dir
 from core.indexing.index import index_documents
 from core.embeddings import get_default_embedding
 
@@ -257,3 +257,36 @@ def test_docstore_does_not_duplicate_text(temp_state_dir, mock_embed_model, tmp_
     chroma_docs = col.get()["documents"]
     assert any("changed text content" in d for d in chroma_docs)
     assert not any("full text content" in d for d in chroma_docs)
+
+def test_project_index_exists_missing_state(tmp_path):
+    assert not project_index_exists({"name": "test", "local_repository": str(tmp_path)}, tmp_path / "state")
+
+def test_project_index_exists_empty_state(tmp_path):
+    state_dir = tmp_path / "state"
+    project_config = {"name": "test", "local_repository": str(tmp_path)}
+    project_state = get_project_state_dir(project_config, state_dir)
+    project_state.mkdir(parents=True)
+    assert not project_index_exists(project_config, state_dir)
+
+def test_project_index_exists_persisted(tmp_path, temp_state_dir, mock_embed_model):
+    project_config = {"name": "test", "local_repository": str(tmp_path)}
+    index_documents([Document(Path("f.txt"), "A", {})], project_config, temp_state_dir, mock_embed_model)
+    assert project_index_exists(project_config, temp_state_dir)
+
+def test_delete_project_index_isolated(tmp_path, temp_state_dir, mock_embed_model):
+    repo_a = tmp_path / "a"
+    repo_a.mkdir()
+    repo_b = tmp_path / "b"
+    repo_b.mkdir()
+    proj_a = {"name": "a", "local_repository": str(repo_a)}
+    proj_b = {"name": "b", "local_repository": str(repo_b)}
+    
+    index_documents([Document(Path("f.txt"), "A", {})], proj_a, temp_state_dir, mock_embed_model)
+    index_documents([Document(Path("f.txt"), "B", {})], proj_b, temp_state_dir, mock_embed_model)
+    
+    delete_project_index(proj_a, temp_state_dir)
+    assert not project_index_exists(proj_a, temp_state_dir)
+    assert project_index_exists(proj_b, temp_state_dir)
+
+def test_delete_missing_state_succeeds(tmp_path):
+    delete_project_index({"name": "test", "local_repository": str(tmp_path)}, tmp_path / "state")

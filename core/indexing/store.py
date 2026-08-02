@@ -1,5 +1,6 @@
 import re
 import hashlib
+import shutil
 from pathlib import Path
 
 import chromadb
@@ -30,6 +31,29 @@ def _get_project_storage_key(project_config: dict) -> str:
 def get_project_state_dir(project_config: dict, state_dir: Path = Path("state")) -> Path:
     project_key = _get_project_storage_key(project_config)
     return state_dir / "chroma" / project_key
+
+def project_index_exists(project_config: dict, state_dir: Path = Path("state")) -> bool:
+    project_state_dir = get_project_state_dir(project_config, state_dir)
+    if not project_state_dir.exists():
+        return False
+        
+    docstore_path = project_state_dir / "docstore.json"
+    chroma_db_path = project_state_dir / "chroma.sqlite3"
+    
+    return docstore_path.exists() and chroma_db_path.exists()
+
+def delete_project_index(
+    project_config: dict,
+    state_dir: Path = Path("state"),
+) -> None:
+    project_state_dir = get_project_state_dir(project_config, state_dir)
+    if project_state_dir.exists():
+        shutil.rmtree(project_state_dir)
+        try:
+            import chromadb.api.client
+            chromadb.api.client.SharedSystemClient.clear_system_cache()
+        except Exception:
+            pass
 
 def get_storage_context(project_config: dict, state_dir: Path = Path("state")) -> StorageContext:
     project_state_dir = get_project_state_dir(project_config, state_dir)
