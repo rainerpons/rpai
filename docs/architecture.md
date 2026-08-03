@@ -6,7 +6,7 @@ This document describes the implemented architectural boundaries, dependency dir
 
 The codebase is organized into modular subsystems:
 
-*   **`config`**: Loads project configuration and resolves consumes values.
+*   **`config`**: Loads project configuration and resolves values consumed by the application.
 *   **`context`**: Owns the project-context pipeline: discovering files, reading their contents, chunking and indexing them using LlamaIndex and Chroma, and performing semantic retrieval.
 *   **`ai`**: Owns inference providers (e.g., Ollama) and client factories.
 *   **`memory`**: Provides a provider-independent long-term semantic memory service.
@@ -26,11 +26,14 @@ The codebase is organized into modular subsystems:
 
 ## Memory Subsystem (`memory`)
 
-The memory subsystem implements long-term semantic storage that is fully independent of any specific backend provider.
+The memory subsystem provides a provider-independent interface for long-term semantic memory.
 
-*   **`MemoryService`**: An abstract base protocol representing the application-facing memory operations (CRUD: create, retrieve, update, delete).
-*   **Mem0**: Reconciles memory storage. Mem0 is the current memory provider, and all code specific to Mem0 remains encapsulated within this package.
-*   **Decoupled Relationship**: Callers and workflow components depend only on the `MemoryService` abstraction, ensuring that replacing Mem0 with a different backend does not affect the rest of the application.
+* **`MemoryService`**: Defines the application-facing operations supported by semantic memory providers.
+* **Mem0 provider**: Implements `MemoryService` using Mem0 while keeping Mem0-specific behavior inside the `memory` package.
+* **Factory**: Constructs the configured memory provider without exposing provider implementations to callers.
+* **Public API**: The package-level `memory` API exposes only the service abstraction and factory function.
+
+Callers depend on `MemoryService`, not on Mem0 or another concrete provider. This allows the provider implementation to change without affecting the rest of the application.
 
 ---
 
@@ -50,7 +53,7 @@ The context subsystem turns a configured local repository into persistent, query
 
 ## Design Patterns in Use
 
-*   **Dependency Inversion**: Workflow orchestration and other packages interact with semantic memory via `MemoryService` rather than importing third-party libraries directly.
+*   **Dependency Inversion**: Orchestration and other consumers depend on the `MemoryService` abstraction rather than a concrete memory provider.
 *   **Pipeline / Data Flow**: Unidirectional pipeline for turning local files into index vectors and semantic queries.
 *   **Data Transfer Objects (DTOs)**: `Document` and `RetrievalResult` prevent external library types (like LlamaIndex documents/nodes) from leaking throughout the application.
-*   **Factory Pattern**: `create_memory_service` and `create_language_model` construct instances from project configuration dicts dynamically.
+*   **Factory Pattern**: Factory functions construct configured application services while hiding concrete provider implementations from callers.

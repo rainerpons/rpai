@@ -10,7 +10,7 @@ class MemoryService(ABC):
     @abstractmethod
     def create(self, text: str, user_id: str, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Create/add a new memory.
+        Create a new memory.
         
         Args:
             text: The text/fact to store.
@@ -43,21 +43,8 @@ class MemoryService(ABC):
 
     @abstractmethod
     def update(self, memory_id: str, text: str) -> None:
-        """
-        Update an existing memory.
-        
-        Args:
-            memory_id: The ID of the memory to update.
-            text: The new text to replace the existing memory.
-        """
         pass
 
     @abstractmethod
     def delete(self, memory_id: str) -> None:
-        """
-        Delete a specific memory by its ID.
-        
-        Args:
-            memory_id: The ID of the memory to delete.
-        """
         pass
