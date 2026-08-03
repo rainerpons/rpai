@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
 from doctor import ValidationResult, ValidationError, ValidationSuccess
-from core.config import load_project_config, resolve_local_repository
+from config import load_project_config, resolve_local_repository
 
 def validate_project(config_path: str | Path) -> ValidationResult:
     path = Path(config_path)
