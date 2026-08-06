@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from memory import create_memory_service, MemoryService
-from memory.service import MemoryEntry
+from memory import create_memory_service, MemoryService, MemoryEntry
 
 def test_factory_creates_mem0_service_with_config():
     memory_config = {
