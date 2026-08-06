@@ -1,14 +1,21 @@
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import Protocol, List, Dict, Any, Optional, runtime_checkable
+from dataclasses import dataclass, field
 
-class MemoryService(ABC):
+@dataclass(frozen=True)
+class MemoryEntry:
+    """Represent a retrieved memory entry."""
+    id: str
+    text: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+@runtime_checkable
+class MemoryService(Protocol):
     """
-    Provider-independent memory service abstraction.
+    Provider-independent memory service interface.
     Only exposes application-facing operations and types.
     """
 
-    @abstractmethod
-    def create(self, text: str, user_id: str, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def create(self, text: str, user_id: str, metadata: Optional[Dict[str, Any]] = None) -> None:
         """
         Create a new memory.
         
@@ -16,35 +23,37 @@ class MemoryService(ABC):
             text: The text/fact to store.
             user_id: The ID of the user scope.
             metadata: Optional custom metadata.
-            
-        Returns:
-            A dictionary containing the operation result (e.g. status, or created memory info).
         """
-        pass
+        ...
 
-    @abstractmethod
-    def retrieve(self, query: str, user_id: str) -> List[Dict[str, Any]]:
+    def search(self, query: str, user_id: str) -> List[MemoryEntry]:
         """
-        Retrieve memories matching a query.
+        Search memories matching a query.
         
         Args:
             query: The semantic search query.
             user_id: The ID of the user scope.
             
         Returns:
-            A list of memories, where each memory is represented as:
-            {
-                "id": str,
-                "text": str,
-                "metadata": Dict[str, Any]
-            }
+            A list of MemoryEntry objects.
         """
-        pass
+        ...
 
-    @abstractmethod
     def update(self, memory_id: str, text: str) -> None:
-        pass
+        """
+        Update an existing memory.
+        
+        Args:
+            memory_id: The ID of the memory to update.
+            text: The new text to replace the existing memory.
+        """
+        ...
 
-    @abstractmethod
     def delete(self, memory_id: str) -> None:
-        pass
+        """
+        Delete a specific memory by its ID.
+        
+        Args:
+            memory_id: The ID of the memory to delete.
+        """
+        ...
