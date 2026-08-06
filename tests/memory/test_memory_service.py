@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from memory import create_memory_service, MemoryService, MemoryEntry
+from memory import create_memory_service, MemoryService, MemoryEntry, MemoryProviderResponseError
 
 def test_factory_creates_mem0_service_with_config():
     memory_config = {
@@ -105,22 +105,22 @@ def test_mem0_search_malformed_responses():
         
         # None result
         mock_memory_instance.search.return_value = None
-        with pytest.raises(ValueError, match="Provider returned None"):
+        with pytest.raises(MemoryProviderResponseError, match="Provider returned None"):
             service.search("q", "u")
             
         # Non list/dict result
         mock_memory_instance.search.return_value = "string result"
-        with pytest.raises(TypeError, match="Unsupported provider response shape"):
+        with pytest.raises(MemoryProviderResponseError, match="Unsupported provider response shape"):
             service.search("q", "u")
             
         # Dict missing results key
         mock_memory_instance.search.return_value = {"not_results": []}
-        with pytest.raises(ValueError, match="missing required 'results' key"):
+        with pytest.raises(MemoryProviderResponseError, match="missing required 'results' key"):
             service.search("q", "u")
             
         # Dict results is not a list
         mock_memory_instance.search.return_value = {"results": "not a list"}
-        with pytest.raises(TypeError, match="'results' field is not a list"):
+        with pytest.raises(MemoryProviderResponseError, match="'results' field is not a list"):
             service.search("q", "u")
 
 def test_mem0_search_invalid_items():
@@ -131,32 +131,32 @@ def test_mem0_search_invalid_items():
         
         # Item is not a dict
         mock_memory_instance.search.return_value = ["not a dict"]
-        with pytest.raises(TypeError, match="Expected dictionary for memory item"):
+        with pytest.raises(MemoryProviderResponseError, match="Expected dictionary for memory item"):
             service.search("q", "u")
             
         # Item missing id
         mock_memory_instance.search.return_value = [{"memory": "some text"}]
-        with pytest.raises(ValueError, match="missing required 'id' key"):
+        with pytest.raises(MemoryProviderResponseError, match="missing required 'id' key"):
             service.search("q", "u")
             
         # Item id is not a string
         mock_memory_instance.search.return_value = [{"id": 123, "memory": "some text"}]
-        with pytest.raises(TypeError, match="'id' must be a string"):
+        with pytest.raises(MemoryProviderResponseError, match="'id' must be a string"):
             service.search("q", "u")
             
         # Item missing content (both memory and text)
         mock_memory_instance.search.return_value = [{"id": "mem-1"}]
-        with pytest.raises(ValueError, match="missing required content key"):
+        with pytest.raises(MemoryProviderResponseError, match="missing required content key"):
             service.search("q", "u")
 
         # Item text is not a string
         mock_memory_instance.search.return_value = [{"id": "mem-1", "memory": 123}]
-        with pytest.raises(TypeError, match="content must be a string"):
+        with pytest.raises(MemoryProviderResponseError, match="content must be a string"):
             service.search("q", "u")
             
         # Metadata is not a dict
         mock_memory_instance.search.return_value = [{"id": "mem-1", "memory": "text", "metadata": "not a dict"}]
-        with pytest.raises(TypeError, match="'metadata' must be a dictionary"):
+        with pytest.raises(MemoryProviderResponseError, match="'metadata' must be a dictionary"):
             service.search("q", "u")
 
 def test_mem0_provider_exception():
