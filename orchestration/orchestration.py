@@ -5,7 +5,7 @@ import context.retrieval
 from context.indexing import ensure_project_index, delete_project_index, build_project_index, IndexLoadError
 from orchestration.context_builder import build_context
 from ai import LanguageModel
-from orchestration.models import WorkflowResult
+from orchestration.models import TaskResult
 
 class ProjectIndexError(RuntimeError):
     pass
@@ -51,7 +51,7 @@ def execute_task(
     top_k: int = 5,
     state_dir: Path = Path("state"),
     progress: Optional[Callable[[str], None]] = None,
-) -> WorkflowResult:
+) -> TaskResult:
     if not task or not task.strip():
         raise ValueError("Task must not be empty.")
 
@@ -73,4 +73,4 @@ def execute_task(
         context=context,
     )
 
-    return WorkflowResult(output=output)
+    return TaskResult(output=output)

@@ -6,7 +6,7 @@ import pytest
 
 from context.retrieval.models import RetrievalResult
 from ai import Context, ContextEntry
-from orchestration.models import WorkflowResult
+from orchestration.models import TaskResult
 from orchestration.orchestration import execute_task, ProjectIndexError
 from context.indexing.store import IndexLoadError
 
@@ -137,7 +137,7 @@ def test_execute_language_model_when_context_is_empty(monkeypatch, fake_project_
     result = execute_task(task="task", project_config=fake_project_config, language_model=lm)
     
     assert lm.received_context == Context(entries=())
-    assert result == WorkflowResult(output="Answer to empty context")
+    assert result == TaskResult(output="Answer to empty context")
 
 def test_wrap_generated_text_in_workflow_result(monkeypatch, fake_project_config):
     monkeypatch.setattr("context.retrieval.retrieve_context", lambda **kw: [])
@@ -145,8 +145,8 @@ def test_wrap_generated_text_in_workflow_result(monkeypatch, fake_project_config
     lm = FakeLanguageModel(return_text="Generated answer")
     result = execute_task(task="task", project_config=fake_project_config, language_model=lm)
     
-    assert result == WorkflowResult(output="Generated answer")
-    assert isinstance(result, WorkflowResult)
+    assert result == TaskResult(output="Generated answer")
+    assert isinstance(result, TaskResult)
 
 def test_preserve_generated_output_exactly(monkeypatch, fake_project_config):
     monkeypatch.setattr("context.retrieval.retrieve_context", lambda **kw: [])

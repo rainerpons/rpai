@@ -9,7 +9,7 @@ from context.indexing.index import index_documents
 from context.ingestion.local_repo import ingest_local_repository
 
 from orchestration import execute_task
-from orchestration.models import WorkflowResult
+from orchestration.models import TaskResult
 from ai import Context
 
 class FakeLanguageModel:
@@ -85,7 +85,7 @@ def test_workflow_integration(tmp_path, monkeypatch):
     )
     
     # Verify context transformation and workflow output
-    assert isinstance(result, WorkflowResult)
+    assert isinstance(result, TaskResult)
     assert result.output == "Integration success"
     assert len(lm.received_context.entries) == 1
     assert lm.received_context.entries[0].source == "src/apple_module.py"
