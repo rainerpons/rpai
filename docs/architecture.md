@@ -30,9 +30,9 @@ The memory subsystem provides a provider-independent interface for long-term sem
 
 * **`MemoryService`**: The application-facing memory abstraction (Protocol) defining the operations supported by semantic memory providers.
 * **`MemoryEntry`**: The application-owned dataclass representing a retrieved memory item.
-* **`MemoryProviderResponseError`**: The application-owned exception raised when provider responses are malformed or unsupported.
+* **`ProviderResponseError`**: The application-owned exception raised when provider responses are malformed or unsupported.
 * **Encapsulated Providers**: Provider implementations (such as Mem0) are implementation details contained entirely within the `memory` subsystem. No provider-specific response types, exceptions, or data structures cross the subsystem boundary.
-* **Provider Adaptation**: The memory subsystem adapts provider responses into application-owned models before exposing them to the rest of the application. Any invalid or unsupported provider responses are translated into `MemoryProviderResponseError` exceptions instead of leaking provider behavior across subsystem boundaries.
+* **Provider Adaptation**: The memory subsystem adapts provider responses into application-owned models before exposing them to the rest of the application. Any invalid or unsupported provider responses are translated into `ProviderResponseError` exceptions instead of leaking provider behavior across subsystem boundaries.
 * **Factory**: Constructs the configured memory provider via the package-level `memory` API.
 
 Callers depend on `MemoryService` and `MemoryEntry`, not on Mem0 or another concrete provider, allowing the implementation to change without affecting the rest of the application.
