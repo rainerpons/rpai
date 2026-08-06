@@ -8,7 +8,7 @@ class MemoryEntry:
     text: str
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-class MemoryProviderResponseError(Exception):
+class ProviderResponseError(RuntimeError):
     """Raised when the memory provider returns a malformed or unsupported response."""
     pass
 
