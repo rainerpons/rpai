@@ -28,12 +28,14 @@ The codebase is organized into modular subsystems:
 
 The memory subsystem provides a provider-independent interface for long-term semantic memory.
 
-* **`MemoryService`**: Defines the application-facing operations supported by semantic memory providers.
-* **Mem0 provider**: Implements `MemoryService` using Mem0 while keeping Mem0-specific behavior inside the `memory` package.
-* **Factory**: Constructs the configured memory provider without exposing provider implementations to callers.
-* **Public API**: The package-level `memory` API exposes only the service abstraction and factory function.
+* **`MemoryService`**: The application-facing memory abstraction (Protocol) defining the operations supported by semantic memory providers.
+* **`MemoryEntry`**: The application-owned dataclass representing a retrieved memory item.
+* **`MemoryProviderResponseError`**: The application-owned exception raised when provider responses are malformed or unsupported.
+* **Encapsulated Providers**: Provider implementations (such as Mem0) are implementation details contained entirely within the `memory` subsystem. No provider-specific response types, exceptions, or data structures cross the subsystem boundary.
+* **Provider Adaptation**: The memory subsystem adapts provider responses into application-owned models before exposing them to the rest of the application. Any invalid or unsupported provider responses are translated into `MemoryProviderResponseError` exceptions instead of leaking provider behavior across subsystem boundaries.
+* **Factory**: Constructs the configured memory provider via the package-level `memory` API.
 
-Callers depend on `MemoryService`, not on Mem0 or another concrete provider. This allows the provider implementation to change without affecting the rest of the application.
+Callers depend on `MemoryService` and `MemoryEntry`, not on Mem0 or another concrete provider, allowing the implementation to change without affecting the rest of the application.
 
 ---
 
