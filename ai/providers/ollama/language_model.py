@@ -1,7 +1,6 @@
 import ollama
 
-from orchestration.context import Context
-from orchestration.language_model import LanguageModel
+from ai import Context, LanguageModel
 from ai.providers.ollama.prompt import build_prompt
 
 

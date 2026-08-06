@@ -4,7 +4,7 @@ from typing import Callable, Optional
 import context.retrieval
 from context.indexing import ensure_project_index, delete_project_index, build_project_index, IndexLoadError
 from orchestration.context_builder import build_context
-from orchestration.language_model import LanguageModel
+from ai import LanguageModel
 from orchestration.models import WorkflowResult
 
 class ProjectIndexError(RuntimeError):

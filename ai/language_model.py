@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from orchestration.context import Context
+from ai.context import Context
 
 class LanguageModel(Protocol):
     def generate(

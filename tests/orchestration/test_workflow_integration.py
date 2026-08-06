@@ -10,7 +10,7 @@ from context.ingestion.local_repo import ingest_local_repository
 
 from orchestration import execute_task
 from orchestration.models import WorkflowResult
-from orchestration.context import Context
+from ai import Context
 
 class FakeLanguageModel:
     def __init__(self, return_text: str = "Fake output", raise_exception: Exception | None = None):

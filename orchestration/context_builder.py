@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 from context.retrieval.models import RetrievalResult
-from orchestration.context import Context, ContextEntry
+from ai import Context, ContextEntry
 
 def build_context(results: Sequence[RetrievalResult]) -> Context:
     entries = []

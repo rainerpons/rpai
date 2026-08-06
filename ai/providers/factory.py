@@ -1,5 +1,5 @@
 from ai.providers.config import LanguageModelConfig
-from orchestration.language_model import LanguageModel
+from ai import LanguageModel
 from ai.providers.ollama.language_model import OllamaLanguageModel
 
 

@@ -5,7 +5,7 @@ import pytest
 
 
 from context.retrieval.models import RetrievalResult
-from orchestration.context import Context, ContextEntry
+from ai import Context, ContextEntry
 from orchestration.models import WorkflowResult
 from orchestration.orchestration import execute_task, ProjectIndexError
 from context.indexing.store import IndexLoadError

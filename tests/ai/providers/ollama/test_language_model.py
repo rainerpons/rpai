@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from orchestration.context import Context, ContextEntry
+from ai import Context, ContextEntry
 from ai.providers.ollama.language_model import OllamaLanguageModel
 
 

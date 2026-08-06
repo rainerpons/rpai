@@ -1,4 +1,4 @@
-from orchestration.context import Context
+from ai import Context
 
 
 def build_prompt(task: str, context: Context) -> str:

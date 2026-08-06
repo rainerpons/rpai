@@ -1,4 +1,4 @@
-from orchestration.context import Context, ContextEntry
+from ai import Context, ContextEntry
 from ai.providers.ollama.prompt import build_prompt
 
 
