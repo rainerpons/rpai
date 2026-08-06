@@ -61,7 +61,7 @@ def test_handle_run_failure(mock_load_project_config, capsys):
     assert captured.out == ""
     assert "Error: Configuration error\n" in captured.err
 
-from workflow.orchestration import ProjectIndexError
+from orchestration import ProjectIndexError
 
 @patch("cli.main.load_project_config")
 @patch("cli.main.load_language_model_config")
